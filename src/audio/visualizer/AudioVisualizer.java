@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Main.java to edit this template
- */
 package audio.visualizer;
 
 /**
@@ -16,7 +12,8 @@ public class AudioVisualizer {
     public static void main(String[] args) {
         // TODO code application logic here
         System.out.println("Landon was here.");
-        System.out.println ("I am error");
+        System.out.println("I am error");
+        System.out.println("another message");
     }
     
 }

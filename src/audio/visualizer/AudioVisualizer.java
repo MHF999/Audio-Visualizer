@@ -4,7 +4,8 @@ package audio.visualizer;
  *
  * @author Landon
  */
-public class AudioVisualizer {
+public class AudioVisualizer 
+{
 
     /**
      * @param args the command line arguments
@@ -15,6 +16,22 @@ public class AudioVisualizer {
         System.out.println("I am error");
         System.out.println("another message");
         System.out.println("Dacota can push stuff!");
+        
+        try
+        {
+            Player p = new Player();
+            p.play();
+        }
+        
+        catch (Exception e)
+        {
+            System.out.println(e.toString());
+            System.out.println("It did something!");
+        }
+        
+        
+        while (true)
+        {}
     }
     
     // NOTE: I did not put in stubs for all of the classes yet...

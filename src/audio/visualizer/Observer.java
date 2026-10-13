@@ -6,6 +6,6 @@ package audio.visualizer;
  */
 public interface Observer {
     
-    public void alert();
+    public void update();
     
 }

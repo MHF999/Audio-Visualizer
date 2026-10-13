@@ -7,7 +7,7 @@ package audio.visualizer;
 public class Library implements Observer {
     
     // Necessary implementation for the Observer interface.
-    public void alert() {}
+    public void update() {}
     
     // These will probably have return types later on.
     public void getWAV() {}

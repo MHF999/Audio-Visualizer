@@ -4,7 +4,8 @@ package audio.visualizer;
  *
  * @author Landon
  */
-public interface Observer {
+public interface Observer
+{
     
     public void update();
     

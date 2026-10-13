@@ -4,7 +4,8 @@ package audio.visualizer;
  *
  * @author Landon
  */
-public class Library implements Observer {
+public class Library implements Observer
+{
     
     // Necessary implementation for the Observer interface.
     public void update() {}

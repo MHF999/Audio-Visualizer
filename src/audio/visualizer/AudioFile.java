@@ -2,6 +2,9 @@ package audio.visualizer;
 
 import java.nio.file.*;
 import java.io.*;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.UnsupportedAudioFileException;
 
 /**
  *
@@ -57,10 +60,19 @@ public class AudioFile
         return file.toFile();
     }
     
+    public int getLength() {
+    return 0;   
+    }
     
-    
-    public int getLength() {return 0;}
-    public int getSampleRate() {return 0;}
+    public int getSampleRate() {
+     try (AudioInputStream audio = AudioSystem.getAudioInputStream(getFile())) {
+            return (int) audio.getFormat().getSampleRate();
+        }
+        
+        catch (UnsupportedAudioFileException | IOException e) { 
+            throw new IllegalStateException("Could not read file: " + file, e);
+        }
+    }
     public void getChunk() {} // Return type of some sort.
     
 }

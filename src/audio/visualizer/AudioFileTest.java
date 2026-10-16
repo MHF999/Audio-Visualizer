@@ -2,7 +2,8 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-// package audio.visualizer;
+
+package audio.visualizer;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -118,7 +119,7 @@ public class AudioFileTest {
      */
         // Output to verify that everything worked:
         System.out.println("Sample Rate: " + audio.getSampleRate()); // Call getSampleRate method and print result.
-        System.out.println("Duration: " + audio.getLength() + " seconds."); // Call getLength and print result.
+        System.out.println("Duration: " + (audio.getFrameLength()/audio.getSampleRate()) + " seconds."); // Call getLength and print result.
     }
 }
 

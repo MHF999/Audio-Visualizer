@@ -16,6 +16,7 @@ public class AudioVisualizer
         
         Scanner scan = new Scanner(System.in);
         AudioFile audioFile;
+        short[] data;
         
         do
         {
@@ -29,6 +30,14 @@ public class AudioVisualizer
         
         try
         {
+            data = audioFile.getData();
+            
+            for (int i = (int) audioFile.getFrameLength() / 4; i < audioFile.getFrameLength()/2; i++)
+            {
+                System.out.println(data[i]);
+                Thread.sleep(1);
+            }
+            
             Player p = new Player(audioFile);
             p.play();
         }
@@ -41,6 +50,8 @@ public class AudioVisualizer
         
         
         while (true) {} // Need to manually shut off program.
+        
+        
     }
     
     // NOTE: I did not put in stubs for all of the classes yet...

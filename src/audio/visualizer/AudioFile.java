@@ -18,11 +18,10 @@ public class AudioFile
     AudioFile(String filepath)
     {
         file = Paths.get(filepath);
-    }
+        name = file.getFileName().toString(); // Assigns a name (just the file name); 
+    }                                         // otherwise file is nameless until renamed.
     
-    
-    // TODO: Need duplicate() and delete() methods.
-    
+       
     
     public boolean isWAV()
     {
@@ -38,6 +37,11 @@ public class AudioFile
         }
         
         return isWAV;
+        
+        // Alternative version w/ built-in string methods:
+        // String fileName = getFile().getName();
+        // return fileName.toLowerCase.(java.util.Locale.ROOT).endsWith(".wav");
+        // NOTE: endsWith() will still return a boolean!
     }
     
     public void rename(String name)
@@ -75,8 +79,8 @@ public class AudioFile
             float frameRate = audio.getFormat().getFrameRate(); 
             long frameLength = audio.getFrameLength(); 
 
-            // These values must be positive natural numbers. Otherwise, duration
-            // cannot be accurately calculated.
+            // These values must be positive. Otherwise, duration cannot be
+            // accurately calculated.
             if (frameRate <= 0 || frameLength < 0) {
                 throw new IllegalStateException("Failed to retrieve audio duration: " + file);
             }
@@ -88,7 +92,7 @@ public class AudioFile
         
         // Handle cases with wrong audio format and general file read issues:
         catch (UnsupportedAudioFileException | IOException e) {
-            throw new IllegalStateException("Could not read WAV file: " + file);
+            throw new IllegalStateException("Could not read WAV file: " + file, e);
         }
     }
     
@@ -110,6 +114,21 @@ public class AudioFile
         }
     }
     
-    public void getChunk() {} // Return type of some sort.
+    // Retrieve and decode samples stored as encoded binary data?
+    // Returns an array of doubles representing the samples.
+    // firstSample = entry point/where to start reading data; should be an index.
+    // chunkSize = how many samples to grab for the array. 
+    // should we convert stereo (left and right speakers) to mono for simpler/faster processing? if so can write another method.
+    // SEE LINK: https://introcs.cs.princeton.edu/java/stdlib/javadoc/StdAudio.html#read(java.lang.String)
+    // ^ has method StdAudio.read() which reads an entire file of audio into an array of doubles.
+    // Converts audio to a 44,100 Hz sample rate and 16-bit samples.
+    // may want to use or riff on depending on what FFT needs, could load entire file and then pass chunks of array by index?
+    public double[] getChunk(long firstSample, int chunkSize) {
+        // Read and decode requested audio samples?
+        return new double[0]; // Temp value to keep stub healthy. 
+    }                         // New array shouldn't leak memory since it's empty!
     
 }
+
+// NOTES FOR AUDIO DATA DECODING: integer value = lower byte + 256(higher byte); 
+// eg for (3,0) value = 3 + 256(0) = 3.

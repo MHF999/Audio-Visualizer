@@ -1,9 +1,11 @@
 package audio.visualizer;
 
 import java.nio.file.*;
+import java.nio.*;
 import java.io.*;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
 /**
@@ -68,7 +70,7 @@ public class AudioFile
     // in audio data. Returns audio duration in seconds; throws Illegal State
     // Exception if wrong audio format, file can't be read, or duration can't
     // be determined.
-    public double getLength() {
+    public long getFrameLength() {
         
         // Try should automatically close input stream after execution.
         try (AudioInputStream audio = AudioSystem.getAudioInputStream(getFile())) {
@@ -76,18 +78,16 @@ public class AudioFile
             // Variables for frame rate and frame length; AudioInputStream provides these.
             // Frame rate = number of audio frames processed per second.
             // Frame length = total number of frames in audio file.
-            float frameRate = audio.getFormat().getFrameRate(); 
             long frameLength = audio.getFrameLength(); 
 
             // These values must be positive. Otherwise, duration cannot be
             // accurately calculated.
-            if (frameRate <= 0 || frameLength < 0) {
+            if (frameLength < 0) {
                 throw new IllegalStateException("Failed to retrieve audio duration: " + file);
             }
             
-            // Divide total number of frames by number of frames per second.
-            // Doesn't have to be cast as a double, but preserves fractional values.
-            return frameLength / (double) frameRate;
+            // Retern total number of frames in .wav file:
+            return frameLength;
         }
         
         // Handle cases with wrong audio format and general file read issues:
@@ -123,10 +123,29 @@ public class AudioFile
     // ^ has method StdAudio.read() which reads an entire file of audio into an array of doubles.
     // Converts audio to a 44,100 Hz sample rate and 16-bit samples.
     // may want to use or riff on depending on what FFT needs, could load entire file and then pass chunks of array by index?
-    public double[] getChunk(long firstSample, int chunkSize) {
-        // Read and decode requested audio samples?
-        return new double[0]; // Temp value to keep stub healthy. 
-    }                         // New array shouldn't leak memory since it's empty!
+    public short[] getData() throws UnsupportedAudioFileException, IOException
+    {
+        short[] data = new short[(int) getFrameLength() / 2];
+        
+        AudioInputStream audio = AudioSystem.getAudioInputStream(getFile());
+        AudioFormat format = audio.getFormat();
+
+        if (format.getEncoding() != AudioFormat.Encoding.PCM_SIGNED || format.getSampleSizeInBits() != 16)
+        {
+            throw new UnsupportedAudioFileException("Only 16-bit signed PCM .wav files are supported.");
+        }
+
+        byte[] audioBytes = new byte[audio.available()];
+        audio.read(audioBytes);
+
+        ByteBuffer.wrap(audioBytes)
+                .order(format.isBigEndian() ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN)
+                .asShortBuffer()
+                .get(data);
+
+        return data;
+
+    }
     
 }
 

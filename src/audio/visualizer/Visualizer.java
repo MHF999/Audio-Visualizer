@@ -1,26 +1,23 @@
 package audio.visualizer;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.util.Random;
-import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 /**
- * A bar-style frequency visualizer. Each bar represents one frequency band.
+ * Base class for frequency visualizers. It owns everything that is not
+ * specific to how the data is drawn: pulling frames from a
+ * FrequencyDataSource about 60 times per second, smoothing the band
+ * magnitudes (with falling peak caps), and driving the repaint timer.
  *
- * The panel does not care where its data comes from. It asks a
- * FrequencyDataSource for a new frame of band magnitudes (each 0.0 to 1.0)
- * about 60 times per second. For now that source is random; later it can be
- * replaced with a class that returns real FFT output.
+ * Subclasses only implement {@link #drawFrame(Graphics2D, int, int)}.
  */
-public class BarVisualizer extends JPanel {
+public abstract class Visualizer extends JPanel {
 
     /** Anything that can produce one frame of band magnitudes, each in 0.0-1.0. */
     public interface FrequencyDataSource {
@@ -48,17 +45,19 @@ public class BarVisualizer extends JPanel {
         }
     }
 
-    private static final int FPS = 60;
-    private static final double FALL_SPEED = 0.02;      // how fast bars drop per frame
-    private static final double PEAK_FALL_SPEED = 0.005; // how fast the peak caps drop
-    private static final int GAP = 3;                    // pixels between bars
+    protected static final int FPS = 60;
+    protected static final double FALL_SPEED = 0.02;       // how fast bars drop per frame
+    protected static final double PEAK_FALL_SPEED = 0.005; // how fast the peak caps drop
 
     private final FrequencyDataSource source;
-    private final double[] bars;
-    private final double[] peaks;
     private final Timer timer;
 
-    public BarVisualizer(FrequencyDataSource source, int bands) {
+    /** Smoothed magnitude of each band, 0.0-1.0. Read by subclasses when drawing. */
+    protected final double[] bars;
+    /** Peak-cap level of each band, 0.0-1.0. Read by subclasses when drawing. */
+    protected final double[] peaks;
+
+    protected Visualizer(FrequencyDataSource source, int bands) {
         this.source = source;
         this.bars = new double[bands];
         this.peaks = new double[bands];
@@ -97,47 +96,17 @@ public class BarVisualizer extends JPanel {
     }
 
     @Override
-    protected void paintComponent(Graphics g) {
+    protected final void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        int w = getWidth();
-        int h = getHeight();
-        int n = bars.length;
-        double barWidth = (w - GAP * (n + 1)) / (double) n;
-
-        for (int i = 0; i < n; i++) {
-            int x = (int) (GAP + i * (barWidth + GAP));
-            int barHeight = (int) (bars[i] * h);
-
-            // Hue shifts from green (low bars) toward red (high bars).
-            float hue = (float) (0.33 * (1.0 - bars[i]));
-            g2.setColor(Color.getHSBColor(hue, 0.85f, 1.0f));
-            g2.fillRect(x, h - barHeight, (int) barWidth, barHeight);
-
-            // Peak cap
-            int peakY = h - (int) (peaks[i] * h);
-            g2.setColor(Color.WHITE);
-            g2.setStroke(new BasicStroke(2f));
-            g2.drawLine(x, peakY, x + (int) barWidth, peakY);
-        }
+        drawFrame(g2, getWidth(), getHeight());
         g2.dispose();
     }
 
-    /** Quick demo: run this class directly to see the bars move. */
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            int bands = 32;
-            BarVisualizer panel = new BarVisualizer(new RandomFrequencyData(bands), bands);
-
-            JFrame frame = new JFrame("Audio Visualizer - Bar Demo");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.add(panel);
-            frame.pack();
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
-            panel.start();
-        });
-    }
+    /**
+     * Draw the current state of {@link #bars} and {@link #peaks}.
+     * The Graphics2D is already configured and is disposed by the caller.
+     */
+    protected abstract void drawFrame(Graphics2D g2, int width, int height);
 }

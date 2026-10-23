@@ -23,14 +23,12 @@ public class Main
        
         System.out.println("Program start!");
         
-        System.out.println(library.getLibraryLocation());
-        
-//        library.importWav("C:\\Users\\Landon\\Downloads\\default2.wav");
-                
+        System.out.println("Current Library Directory: " + library.getLibraryLocation());
+                        
         while (!nextLine.equals("play"))
         {
             // Like the following (Windows) filepath -- C:\Users\Landon\Downloads\sample.wav
-            System.out.print("Enter \"disp\", the absolute path to your .wav file, or \"end\": ");
+            System.out.print("Enter \"disp\", the absolute path to your .wav file, or \"play\": ");
             nextLine = scan.nextLine();
             library.importWav(nextLine);
             
@@ -44,23 +42,41 @@ public class Main
                 
         }
         
-        while (true) // Need to manually exit program.
+        System.out.print("Enter the index of the .wav file to play (1, 2, etc.): ");
+        nextLine = scan.nextLine();
+        int index = Integer.parseInt(nextLine);
+
+        try
         {
-            System.out.print("Enter the index of the .wav file to play (1, 2, etc.): ");
-            nextLine = scan.nextLine();
-            int index = Integer.parseInt(nextLine);
+            Player player = new Player(library.getAudioFiles().get(index-1));
+            player.play();
 
-            try
+            while (!nextLine.equals("stop"))
             {
-                Player p = new Player(library.getAudioFiles().get(index-1));
-                p.play();
+                System.out.print("Enter a player control (play, pause, stop, skipBack, skipForward, or getTime): ");
+                nextLine = scan.nextLine();
+                
+                if (nextLine.equals("play"))
+                    player.play();
+                else if (nextLine.equals("pause"))
+                    player.pause();
+                else if (nextLine.equals("stop"))
+                    player.stop();
+                else if (nextLine.equals("skipBack"))
+                    player.skipBack();
+                else if (nextLine.equals("skipForward"))
+                    player.skipForward();
+                else if (nextLine.equals("getTime"))
+                    System.out.println("Current Audio Time: "
+                                       + (int) player.getCurrentTime() + "/"
+                                       + (int) player.getTotalTime());
             }
+        }
 
-            catch (Exception e)
-            {
-                System.out.println("Something broke...");
-                System.out.println(e.getMessage());
-            }
+        catch (Exception e)
+        {
+            System.out.println("Something broke...");
+            System.out.println(e.getMessage());
         }
     } 
         

@@ -28,5 +28,5 @@ replay_pid*
 
 
 # Library and Config Files
-/Library/
-/Configs/
+!/Library/
+!/Configs/

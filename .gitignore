@@ -25,7 +25,10 @@
 hs_err_pid*
 replay_pid*
 /build/
-
+/nbproject/
+/test/
+build.xml
+manifest.mf
 
 # Library and Config Files
 !/Library/

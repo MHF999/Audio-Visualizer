@@ -23,12 +23,12 @@ public class Main
        
         System.out.println("Program start!");
         
-        System.out.println("Current Library Directory: " + library.getLibraryLocation());
+        System.out.println("Current Library Directory: " + library.getLibraryLocation() + "\n");
                         
         while (!nextLine.equals("play"))
         {
             // Like the following (Windows) filepath -- C:\Users\Landon\Downloads\sample.wav
-            System.out.print("Enter \"disp\", the absolute path to your .wav file, or \"play\": ");
+            System.out.print("Enter \"disp\" to show all .wav files in Library, the absolute path to your .wav file, or \"play\": ");
             nextLine = scan.nextLine();
             library.importWav(nextLine);
             
@@ -38,8 +38,7 @@ public class Main
                 {
                     System.out.println(audioFile.getName());
                 }
-            }
-                
+            }    
         }
         
         System.out.print("Enter the index of the .wav file to play (1, 2, etc.): ");
@@ -80,29 +79,6 @@ public class Main
         }
     } 
         
-        
-// Random Tests:
-        
-//        try
-//        {
-//            System.out.println(new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParentFile().getPath());
-//            System.out.println(new File(".").getCanonicalPath());
-//            data = audioFile.getData();
-//            
-//            for (int i = (int) audioFile.getFrameLength() / 4; i < audioFile.getFrameLength()/2; i++)
-//            {
-//                System.out.println(data[i]);
-//                Thread.sleep(1);
-//            }
-//        }
-//        
-//        catch (Exception e)
-//        {
-//            System.out.println(e.getMessage());
-//        }
-//                
-    
-    
     public void popUp(String warning)
     {
         // This will generate a JSwing pop-up window for whenever

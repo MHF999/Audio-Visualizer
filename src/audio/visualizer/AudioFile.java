@@ -1,8 +1,11 @@
 package audio.visualizer;
 
-import java.nio.file.*;
-import java.nio.*;
-import java.io.*;
+import java.nio.file.Paths;
+import java.nio.file.Path;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.io.File;
+import java.io.IOException;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioFormat;
@@ -15,17 +18,18 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 public class AudioFile
 {
     private Path file;
-    private String name;
     
-    AudioFile(String filepath)
+    public AudioFile(String filepath)
     {
         file = Paths.get(filepath);
-        name = file.getFileName().toString(); // Assigns a name (just the file name); 
-    }                                         // otherwise file is nameless until renamed.
+    }
     
-       
+    public AudioFile(Path path)
+    {
+        file = path;
+    }
     
-    public boolean isWAV()
+    public boolean isWav()
     {
         boolean isWAV = false;
         String filepath = getFile().getAbsolutePath();
@@ -39,21 +43,11 @@ public class AudioFile
         }
         
         return isWAV;
-        
-        // Alternative version w/ built-in string methods:
-        // String fileName = getFile().getName();
-        // return fileName.toLowerCase.(java.util.Locale.ROOT).endsWith(".wav");
-        // NOTE: endsWith() will still return a boolean!
-    }
-    
-    public void rename(String name)
-    {
-        this.name = name;
     }
     
     public String getName()
     {
-        return name;
+        return file.getFileName().toString();
     }
     
     public Path getPath()
@@ -73,7 +67,8 @@ public class AudioFile
     public long getFrameLength() {
         
         // Try should automatically close input stream after execution.
-        try (AudioInputStream audio = AudioSystem.getAudioInputStream(getFile())) {
+        try (AudioInputStream audio = AudioSystem.getAudioInputStream(getFile()))
+        {
             
             // Variables for frame rate and frame length; AudioInputStream provides these.
             // Frame rate = number of audio frames processed per second.
@@ -122,9 +117,8 @@ public class AudioFile
     // SEE LINK: https://introcs.cs.princeton.edu/java/stdlib/javadoc/StdAudio.html#read(java.lang.String)
     // ^ has method StdAudio.read() which reads an entire file of audio into an array of doubles.
     // Converts audio to a 44,100 Hz sample rate and 16-bit samples.
-    // may want to use or riff on depending on what FFT needs, could load entire file and then pass chunks of array by index?
-    
-    public short[] getData() throws UnsupportedAudioFileException, IOException
+    // may want to use or riff on depending on what FFT needs, could load entire file and then pass chunks of array by index? 
+    private short[] getData() throws UnsupportedAudioFileException, IOException
     {
         short[] data = new short[(int) getFrameLength() / 2];
         
@@ -153,7 +147,6 @@ public class AudioFile
 
     }
     
-    // 
     public double[] getMonoData() throws UnsupportedAudioFileException, IOException {
 
         // Take/store info returned by getData; declare variable to get number of audio channels.

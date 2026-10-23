@@ -1,12 +1,9 @@
 package audio.visualizer;
 
-
+import java.awt.BorderLayout;
 import java.util.logging.Logger;
 import javax.swing.*;
 import java.io.File;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
 
 /**
  *
@@ -21,6 +18,10 @@ public class GUI extends JFrame {
      */
     public GUI() {
         initComponents();
+        Visualizer visual = new StandardBarVisualizer(new Visualizer.RandomFrequencyData(32), 32); // Runs the visualizer inside the GUI panel w/ a Demo of Standard Bar Visualizer
+        blueBackgroundPane.setLayout(new BorderLayout()); 
+        blueBackgroundPane.add(visual, BorderLayout.CENTER);
+        visual.start();
     }
 
     /**

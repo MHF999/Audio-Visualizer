@@ -39,8 +39,8 @@ public class StandardBarVisualizer extends Visualizer {
             g2.drawLine(x, peakY, x + (int) barWidth, peakY);
         }
     }
-
-    /** Quick demo: run this class directly to see the bars move. */
+// sdnapoles: I commented this out and included the demo inside the GUI
+    /** Quick demo: run this class directly to see the bars move. 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             int bands = 32;
@@ -55,5 +55,5 @@ public class StandardBarVisualizer extends Visualizer {
             frame.setVisible(true);
             panel.start();
         });
-    }
+    }*/
 }

@@ -65,9 +65,30 @@ public class FFT
         
     }
     
-    public void saveData() {}
-    public void runFFT() {}
-    public void getFreq() {}
-   
+    public void saveData() {
+        
+    }
+    
+    // Run the FFT:
+    public void runFFT() {
+        if (samples == null) {
+            throw new IllegalStateException("Need to loadData() before calling runFFT()!");
+        }
+        
+        FastFourierTransform transformData = new FastFourierTransform(FastFourierTransform.Norm.STD);
+        
+        transformedData = transformData.apply(samples);
+    }
+    
+    // Retrieve the complex array produced by the FFT and convert to format 
+    // that the visualizer expects:
+    public double[] getFreq() {
+        int binCount = transformedData.length / 2 + 1;
+        double[] magnitudes = new double[binCount];
+        
+        for (int i = 0; i < binCount; i++) {
+            magnitudes[i] = transformedData[i].abs();
+        }   
+        return magnitudes;
+    }   
 }
-

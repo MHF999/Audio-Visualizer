@@ -18,7 +18,8 @@ public class GUI extends JFrame {
     private Player player; // Player Declaration for use in button controls
     private final DefaultListModel<File> customModel = new DefaultListModel<>(); // JList 
     private File selectedFile;
-
+    private Visualizer visual;
+    
     public GUI() {
         initComponents();
         playlistCustom.setModel(customModel);
@@ -64,10 +65,29 @@ public class GUI extends JFrame {
                 }
             }
         });
-        // Runs the visualizer inside the GUI panel w/ a Demo of Standard Bar Visualizer
-        Visualizer visual = new StandardBarVisualizer(new Visualizer.RandomFrequencyData(5), 5);
+
+// Runs the visualizer inside the GUI panel w/ a Demo of Standard Bar Visualizer
+        jSpinner1.setModel(new SpinnerNumberModel(32, 1, 100, 1));
+        int initialBands = (Integer) jSpinner1.getValue();
+
+        visual = new StandardBarVisualizer(new Visualizer.RandomFrequencyData(initialBands), initialBands);
         blueBackgroundPane.setLayout(new BorderLayout());
         blueBackgroundPane.add(visual, BorderLayout.CENTER);
+        visual.start();
+
+ 
+
+        jSpinner1.addChangeListener(e -> {
+            int bands = (Integer) jSpinner1.getValue();
+            visual.stop();
+            blueBackgroundPane.remove(visual);
+
+            visual = new StandardBarVisualizer(new Visualizer.RandomFrequencyData(bands), bands);
+            blueBackgroundPane.add(visual, BorderLayout.CENTER);
+            blueBackgroundPane.revalidate();
+            blueBackgroundPane.repaint();
+            visual.start();
+        });
 
         // Timer that checks the player every 100ms and updates the slider while it's not actively being dragged.
         progressTimer = new Timer(100, e -> {
@@ -81,7 +101,6 @@ public class GUI extends JFrame {
                 labelCurrentDuration.setText(String.format("%02d:%02d", minutes, seconds));
             }
         });
-
     }
 
     /**
@@ -99,14 +118,21 @@ public class GUI extends JFrame {
         playlistCustom = new javax.swing.JList<>();
         scrollReference = new javax.swing.JScrollPane();
         playlistReference = new javax.swing.JList<>();
-        labelReference = new javax.swing.JLabel();
         exportFileButton = new JButton();
         labelCustom = new javax.swing.JLabel();
         importFileButton = new javax.swing.JButton();
+        jSeparator2 = new javax.swing.JSeparator();
+        labelReference = new javax.swing.JLabel();
+        defaultLibarySeperator = new javax.swing.JSeparator();
         panelTab_Type = new javax.swing.JPanel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jList1 = new javax.swing.JList<>();
         panelTab_Color = new javax.swing.JPanel();
         jColorChooser1 = new javax.swing.JColorChooser();
         panelTab_Layout = new javax.swing.JPanel();
+        jSeparator1 = new javax.swing.JSeparator();
+        jLabel1 = new javax.swing.JLabel();
+        jSpinner1 = new javax.swing.JSpinner();
         panelTab_Configs = new javax.swing.JPanel();
         panelMedia_Controls = new javax.swing.JPanel();
         labelCurrentDuration = new javax.swing.JLabel();
@@ -126,9 +152,13 @@ public class GUI extends JFrame {
         TabbedPane.setFont(new java.awt.Font("Liberation Serif", 2, 14)); // NOI18N
         TabbedPane.setPreferredSize(new java.awt.Dimension(270, 446));
 
+        panelTab_Files.setMinimumSize(new java.awt.Dimension(1, 1));
+
+        playlistCustom.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.LOWERED));
         playlistCustom.setFont(new java.awt.Font("Liberation Mono", 2, 18)); // NOI18N
         scrollCustom.setViewportView(playlistCustom);
 
+        playlistReference.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.LOWERED));
         playlistReference.setFont(new java.awt.Font("Liberation Mono", 2, 18)); // NOI18N
         playlistReference.setModel(new javax.swing.AbstractListModel<String>() {
             String[] strings = { "default_1.wav", "default_2.wav", "default_3.wav" };
@@ -136,11 +166,6 @@ public class GUI extends JFrame {
             public String getElementAt(int i) { return strings[i]; }
         });
         scrollReference.setViewportView(playlistReference);
-
-        labelReference.setFont(new java.awt.Font("Liberation Mono", 3, 18)); // NOI18N
-        labelReference.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        labelReference.setText("Default Library");
-        labelReference.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
 
         exportFileButton.setFont(new java.awt.Font("Liberation Mono", 2, 14)); // NOI18N
         exportFileButton.setText("<html>Export<br>(.mp4)</html>");
@@ -151,7 +176,6 @@ public class GUI extends JFrame {
         labelCustom.setFont(new java.awt.Font("Liberation Mono", 3, 18)); // NOI18N
         labelCustom.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         labelCustom.setText("Custom Library");
-        labelCustom.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
 
         importFileButton.setFont(new java.awt.Font("Liberation Mono", 2, 14)); // NOI18N
         importFileButton.setText("<html>Import<br>(.wav)</html>");
@@ -161,32 +185,51 @@ public class GUI extends JFrame {
         importFileButton.setPreferredSize(new java.awt.Dimension(55, 45));
         importFileButton.addActionListener(this::importFileButtonActionPerformed);
 
+        labelReference.setFont(new java.awt.Font("Liberation Mono", 3, 18)); // NOI18N
+        labelReference.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        labelReference.setText("Default Library");
+
         javax.swing.GroupLayout panelTab_FilesLayout = new javax.swing.GroupLayout(panelTab_Files);
         panelTab_Files.setLayout(panelTab_FilesLayout);
         panelTab_FilesLayout.setHorizontalGroup(
             panelTab_FilesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(scrollCustom, javax.swing.GroupLayout.DEFAULT_SIZE, 296, Short.MAX_VALUE)
+            .addComponent(scrollCustom)
             .addComponent(scrollReference)
-            .addComponent(labelReference, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jSeparator2)
             .addGroup(panelTab_FilesLayout.createSequentialGroup()
-                .addGap(45, 45, 45)
-                .addComponent(exportFileButton, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(47, 47, 47)
-                .addComponent(importFileButton, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addComponent(labelCustom, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(panelTab_FilesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(panelTab_FilesLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(labelCustom, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(panelTab_FilesLayout.createSequentialGroup()
+                        .addGap(45, 45, 45)
+                        .addComponent(exportFileButton, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(47, 47, 47)
+                        .addComponent(importFileButton, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(panelTab_FilesLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(labelReference, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelTab_FilesLayout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(defaultLibarySeperator, javax.swing.GroupLayout.PREFERRED_SIZE, 295, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap())
         );
         panelTab_FilesLayout.setVerticalGroup(
             panelTab_FilesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelTab_FilesLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(labelCustom)
+                .addGap(0, 0, 0)
+                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 3, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(scrollCustom, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(scrollCustom, javax.swing.GroupLayout.PREFERRED_SIZE, 136, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(labelReference)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(defaultLibarySeperator, javax.swing.GroupLayout.PREFERRED_SIZE, 6, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(scrollReference, javax.swing.GroupLayout.DEFAULT_SIZE, 201, Short.MAX_VALUE)
+                .addComponent(scrollReference, javax.swing.GroupLayout.PREFERRED_SIZE, 368, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(panelTab_FilesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(exportFileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -196,15 +239,31 @@ public class GUI extends JFrame {
 
         TabbedPane.addTab("Files", panelTab_Files);
 
+        jList1.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.LOWERED));
+        jList1.setFont(new java.awt.Font("Liberation Mono", 2, 18)); // NOI18N
+        jList1.setModel(new javax.swing.AbstractListModel<String>() {
+            String[] strings = { "Vertical Bars", "Horizontal Bars", "TBA 1", "TBA 2" };
+            public int getSize() { return strings.length; }
+            public String getElementAt(int i) { return strings[i]; }
+        });
+        jList1.setSelectedIndex(0); // Default to Vertical Bars
+        jScrollPane1.setViewportView(jList1);
+
         javax.swing.GroupLayout panelTab_TypeLayout = new javax.swing.GroupLayout(panelTab_Type);
         panelTab_Type.setLayout(panelTab_TypeLayout);
         panelTab_TypeLayout.setHorizontalGroup(
             panelTab_TypeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGroup(panelTab_TypeLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 284, Short.MAX_VALUE)
+                .addContainerGap())
         );
         panelTab_TypeLayout.setVerticalGroup(
             panelTab_TypeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelTab_TypeLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 573, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         TabbedPane.addTab("Type", panelTab_Type);
@@ -214,7 +273,7 @@ public class GUI extends JFrame {
         panelTab_ColorLayout.setHorizontalGroup(
             panelTab_ColorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelTab_ColorLayout.createSequentialGroup()
-                .addComponent(jColorChooser1, javax.swing.GroupLayout.PREFERRED_SIZE, 307, Short.MAX_VALUE)
+                .addComponent(jColorChooser1, javax.swing.GroupLayout.PREFERRED_SIZE, 320, Short.MAX_VALUE)
                 .addGap(1, 1, 1))
         );
         panelTab_ColorLayout.setVerticalGroup(
@@ -224,16 +283,56 @@ public class GUI extends JFrame {
 
         TabbedPane.addTab("Color", panelTab_Color);
 
+        jLabel1.setFont(new java.awt.Font("Liberation Mono", 1, 14)); // NOI18N
+        jLabel1.setText("Bars");
+
         javax.swing.GroupLayout panelTab_LayoutLayout = new javax.swing.GroupLayout(panelTab_Layout);
         panelTab_Layout.setLayout(panelTab_LayoutLayout);
         panelTab_LayoutLayout.setHorizontalGroup(
             panelTab_LayoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGroup(panelTab_LayoutLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(188, 188, 188)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.DEFAULT_SIZE, 1, Short.MAX_VALUE))
         );
         panelTab_LayoutLayout.setVerticalGroup(
             panelTab_LayoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGroup(panelTab_LayoutLayout.createSequentialGroup()
+                .addGroup(panelTab_LayoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(panelTab_LayoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel1))
+                    .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(434, 434, 434))
         );
+
+        jSpinner1.addChangeListener(e -> {
+            int bands = (Integer) jSpinner1.getValue();
+            // Recreate or reinitialize your visualizer panel inside the container frame
+        });
+
+        // Runs the visualizer inside the GUI panel w/ a Demo of Standard Bar Visualizer
+        int initialBands = 5;
+        visual = new StandardBarVisualizer(new Visualizer.RandomFrequencyData(initialBands), initialBands);
+        blueBackgroundPane.setLayout(new BorderLayout());
+        blueBackgroundPane.add(visual, BorderLayout.CENTER);
+
+        // Initialize jSpinner1 model and listener
+        jSpinner1.setModel(new SpinnerNumberModel(initialBands, 1, 128, 1));
+        jSpinner1.addChangeListener(e -> {
+            int bands = (Integer) jSpinner1.getValue();
+            visual.stop();
+            blueBackgroundPane.remove(visual);
+
+            visual = new StandardBarVisualizer(new Visualizer.RandomFrequencyData(bands), bands);
+            blueBackgroundPane.add(visual, BorderLayout.CENTER);
+            blueBackgroundPane.revalidate();
+            blueBackgroundPane.repaint();
+            visual.start();
+        });
 
         TabbedPane.addTab("Layout", panelTab_Layout);
 
@@ -260,9 +359,6 @@ public class GUI extends JFrame {
         labelMaxDuration.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         labelMaxDuration.setText("--:--");
         labelMaxDuration.setToolTipText("");
-        labelMaxDuration.setMaximumSize(new java.awt.Dimension(70, 28));
-        labelMaxDuration.setMinimumSize(new java.awt.Dimension(70, 28));
-        labelMaxDuration.setPreferredSize(new java.awt.Dimension(70, 28));
 
         seekBar.setMaximumSize(new java.awt.Dimension(32767, 28));
         seekBar.setMinimumSize(new java.awt.Dimension(36, 28));
@@ -344,7 +440,7 @@ public class GUI extends JFrame {
         panelMedia_ControlsLayout.setHorizontalGroup(
             panelMedia_ControlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelMedia_ControlsLayout.createSequentialGroup()
-                .addContainerGap(352, Short.MAX_VALUE)
+                .addContainerGap(364, Short.MAX_VALUE)
                 .addComponent(skipBackButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(playButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -361,7 +457,7 @@ public class GUI extends JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(seekBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(labelMaxDuration, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(labelMaxDuration)
                 .addContainerGap())
         );
 
@@ -381,7 +477,7 @@ public class GUI extends JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(panelMedia_ControlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(seekBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(labelMaxDuration, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(labelMaxDuration)
                     .addComponent(labelCurrentDuration))
                 .addContainerGap())
         );
@@ -400,7 +496,7 @@ public class GUI extends JFrame {
         );
         blueBackgroundPaneLayout.setVerticalGroup(
             blueBackgroundPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 493, Short.MAX_VALUE)
+            .addGap(0, 620, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -408,20 +504,16 @@ public class GUI extends JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(TabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 298, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(blueBackgroundPane))
-                    .addComponent(panelMedia_Controls, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
+                .addComponent(TabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 298, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(blueBackgroundPane))
+            .addComponent(panelMedia_Controls, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(TabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(TabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 622, Short.MAX_VALUE)
                     .addComponent(blueBackgroundPane))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(panelMedia_Controls, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -448,29 +540,6 @@ public class GUI extends JFrame {
             logger.log(java.util.logging.Level.SEVERE, null, ex);
         }
     }
-// === File Tab Handlers ===
-    private void importFileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importFileButtonActionPerformed
-        JFileChooser chooser = new JFileChooser(System.getProperty("user.home"));
-        chooser.setDialogTitle("Choose a .wav file");
-        chooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("WAV audio (*.wav)", "wav"));
-        chooser.setAcceptAllFileFilterUsed(false);
-        int result = chooser.showOpenDialog(this);
-
-        if (result == JFileChooser.APPROVE_OPTION) {
-            File selected = chooser.getSelectedFile();
-            if (!customModel.contains(selected)) {
-                customModel.addElement(selected);
-            }
-            playlistReference.clearSelection();
-            playlistCustom.setSelectedValue(selected, true);
-            selectedFile = selected;
-            loadAudioFile(selected);
-        }
-    }//GEN-LAST:event_importFileButtonActionPerformed
-
-    private void exportFileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportFileButtonActionPerformed
-        // TODO: exportfilebutton code
-    }//GEN-LAST:event_exportFileButtonActionPerformed
 // === Media Control Handlers ===
     private void playButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playButtonActionPerformed
         if (player == null && selectedFile != null) {
@@ -540,9 +609,17 @@ public class GUI extends JFrame {
 
     private void seekBarStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_seekBarStateChanged
         if (seekBar.getValueIsAdjusting() && player != null) {
-            int targetMillis = seekBar.getValue();
+//            int targetMillis = seekBar.getValue();
         }
     }//GEN-LAST:event_seekBarStateChanged
+
+    private void importFileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importFileButtonActionPerformed
+
+    }//GEN-LAST:event_importFileButtonActionPerformed
+
+    private void exportFileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportFileButtonActionPerformed
+        // TODO: exportfilebutton code
+    }//GEN-LAST:event_exportFileButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -571,9 +648,16 @@ public class GUI extends JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTabbedPane TabbedPane;
     private javax.swing.JDesktopPane blueBackgroundPane;
+    private javax.swing.JSeparator defaultLibarySeperator;
     private javax.swing.JButton exportFileButton;
     private javax.swing.JButton importFileButton;
     private javax.swing.JColorChooser jColorChooser1;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JList<String> jList1;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JSeparator jSeparator2;
+    private javax.swing.JSpinner jSpinner1;
     private javax.swing.JLabel labelCurrentDuration;
     private javax.swing.JLabel labelCustom;
     private javax.swing.JLabel labelMaxDuration;

@@ -95,6 +95,28 @@ public abstract class Visualizer extends JPanel {
         return Math.max(0.0, Math.min(1.0, v));
     }
 
+    /**
+     * Squeezes {@code values} into {@code count} slots by taking the largest
+     * value of each group of neighbouring entries (32 values into 16 slots
+     * pairs them up). Used by symmetrical visualizers that show each half of
+     * the spectrum on one side, so the total bar count stays equal to the
+     * number of bands.
+     */
+    protected static double[] fold(double[] values, int count) {
+        double[] out = new double[count];
+        int n = values.length;
+        for (int j = 0; j < count; j++) {
+            int from = j * n / count;
+            int to = Math.max(from + 1, (j + 1) * n / count); // exclusive, at least one value
+            double peak = 0;
+            for (int k = from; k < to && k < n; k++) {
+                peak = Math.max(peak, values[k]);
+            }
+            out[j] = peak;
+        }
+        return out;
+    }
+
     @Override
     protected final void paintComponent(Graphics g) {
         super.paintComponent(g);

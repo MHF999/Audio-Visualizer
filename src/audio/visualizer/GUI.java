@@ -1,12 +1,11 @@
 package audio.visualizer;
 
-
-import java.util.logging.Logger;
+import java.util.logging.*;
 import javax.swing.*;
-import java.io.File;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
+import java.io.*;
+import java.awt.*; // not sure why this if flagged as unused, java.awt.Borderlayout and others depend on it.
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
 
 /**
  *
@@ -15,12 +14,93 @@ import javax.sound.sampled.Clip;
 public class GUI extends JFrame {
 
     private static final Logger logger = Logger.getLogger(GUI.class.getName());
-
-    /**
-     * Creates new form UI
-     */
+    private final Timer progressTimer; // Timer Declaration for use in time management regarding seekBar and labelDuration
+    private Player player; // Player Declaration for use in button controls
+    private final DefaultListModel<File> customModel = new DefaultListModel<>(); // JList 
+    private File selectedFile;
+    private Visualizer visual;
+    
     public GUI() {
         initComponents();
+        playlistCustom.setModel(customModel);
+
+        // Selecting a reference song stores it; loading happens when play is pressed. Alllowing user to use default library without needing to import anything.
+        playlistReference.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                String fileName = playlistReference.getSelectedValue();
+                if (fileName != null) {
+                    playlistCustom.clearSelection();
+                    selectedFile = new File("Library", fileName);
+                }
+            }
+        });
+        playlistReference.setCellRenderer(new DefaultListCellRenderer());
+
+        // Initialize reference playlist model 
+        playlistCustom.setCellRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean sel, boolean focus) {
+                super.getListCellRendererComponent(list, value, index, sel, focus);
+                if (value instanceof File f) {
+                    setText(f.getName());
+                }
+                return this;
+            }
+        });
+        playlistReference.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                String fileName = playlistReference.getSelectedValue();
+                if (fileName != null) {
+                    playlistCustom.clearSelection();
+                    selectedFile = new File("Library", fileName);
+                }
+            }
+        });
+        playlistCustom.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                File f = playlistCustom.getSelectedValue();
+                if (f != null) {
+                    playlistReference.clearSelection();
+                    selectedFile = f;
+                }
+            }
+        });
+
+// Runs the visualizer inside the GUI panel w/ a Demo of Standard Bar Visualizer
+        jSpinner1.setModel(new SpinnerNumberModel(32, 1, 100, 1));
+        int initialBands = (Integer) jSpinner1.getValue();
+
+        visual = new StandardBarVisualizer(new Visualizer.RandomFrequencyData(initialBands), initialBands);
+        blueBackgroundPane.setLayout(new BorderLayout());
+        blueBackgroundPane.add(visual, BorderLayout.CENTER);
+        visual.start();
+
+ 
+
+        jSpinner1.addChangeListener(e -> {
+            int bands = (Integer) jSpinner1.getValue();
+            visual.stop();
+            blueBackgroundPane.remove(visual);
+
+            visual = new StandardBarVisualizer(new Visualizer.RandomFrequencyData(bands), bands);
+            blueBackgroundPane.add(visual, BorderLayout.CENTER);
+            blueBackgroundPane.revalidate();
+            blueBackgroundPane.repaint();
+            visual.start();
+        });
+
+        // Timer that checks the player every 100ms and updates the slider while it's not actively being dragged.
+        progressTimer = new Timer(100, e -> {
+            if (player != null && !seekBar.getValueIsAdjusting()) {
+                int currentMillis = (int) (player.getCurrentTime() * 1000.0);
+                seekBar.setValue(currentMillis); // updates the slider's position value to the current millisecond.
+
+                double currentSeconds = player.getCurrentTime();
+                int minutes = (int) (currentSeconds / 60);
+                int seconds = (int) (currentSeconds % 60);
+                labelCurrentDuration.setText(String.format("%02d:%02d", minutes, seconds));
+            }
+        });
     }
 
     /**
@@ -35,66 +115,79 @@ public class GUI extends JFrame {
         TabbedPane = new javax.swing.JTabbedPane();
         panelTab_Files = new javax.swing.JPanel();
         scrollCustom = new javax.swing.JScrollPane();
-        listCustom = new javax.swing.JList<>();
+        playlistCustom = new javax.swing.JList<>();
         scrollReference = new javax.swing.JScrollPane();
-        listReference = new javax.swing.JList<>();
-        labelReference = new javax.swing.JLabel();
+        playlistReference = new javax.swing.JList<>();
         exportFileButton = new JButton();
         labelCustom = new javax.swing.JLabel();
         importFileButton = new javax.swing.JButton();
+        jSeparator2 = new javax.swing.JSeparator();
+        labelReference = new javax.swing.JLabel();
+        defaultLibarySeperator = new javax.swing.JSeparator();
         panelTab_Type = new javax.swing.JPanel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jList1 = new javax.swing.JList<>();
         panelTab_Color = new javax.swing.JPanel();
+        jColorChooser1 = new javax.swing.JColorChooser();
         panelTab_Layout = new javax.swing.JPanel();
+        jSeparator1 = new javax.swing.JSeparator();
+        jLabel1 = new javax.swing.JLabel();
+        jSpinner1 = new javax.swing.JSpinner();
         panelTab_Configs = new javax.swing.JPanel();
         panelMedia_Controls = new javax.swing.JPanel();
-        jLabel2 = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
+        labelCurrentDuration = new javax.swing.JLabel();
+        labelMaxDuration = new javax.swing.JLabel();
         seekBar = new javax.swing.JSlider();
-        button_Stop = new javax.swing.JButton();
-        button_Forward = new javax.swing.JButton();
-        button_Pause = new javax.swing.JButton();
-        button_Play = new javax.swing.JButton();
-        buttonRewind = new javax.swing.JButton();
+        skipBackButton = new javax.swing.JButton();
+        skipForwardButton = new javax.swing.JButton();
+        playButton = new javax.swing.JButton();
+        pauseButton = new javax.swing.JButton();
+        stopButtonAction = new javax.swing.JButton();
         blueBackgroundPane = new javax.swing.JDesktopPane();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
 
         TabbedPane.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
-        TabbedPane.setFont(new java.awt.Font("DejaVu Sans", 2, 10)); // NOI18N
+        TabbedPane.setFont(new java.awt.Font("Liberation Serif", 2, 14)); // NOI18N
+        TabbedPane.setPreferredSize(new java.awt.Dimension(270, 446));
 
-        listCustom.setFont(new java.awt.Font("DejaVu Sans", 2, 16)); // NOI18N
-        listCustom.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "UserFile1.wav", "UserFile2.wav", "UserFile3.wav", "UserFile4.wav", "UserFile5.wav" };
+        panelTab_Files.setMinimumSize(new java.awt.Dimension(1, 1));
+
+        playlistCustom.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.LOWERED));
+        playlistCustom.setFont(new java.awt.Font("Liberation Mono", 2, 18)); // NOI18N
+        scrollCustom.setViewportView(playlistCustom);
+
+        playlistReference.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.LOWERED));
+        playlistReference.setFont(new java.awt.Font("Liberation Mono", 2, 18)); // NOI18N
+        playlistReference.setModel(new javax.swing.AbstractListModel<String>() {
+            String[] strings = { "default_1.wav", "default_2.wav", "default_3.wav" };
             public int getSize() { return strings.length; }
             public String getElementAt(int i) { return strings[i]; }
         });
-        scrollCustom.setViewportView(listCustom);
+        scrollReference.setViewportView(playlistReference);
 
-        listReference.setFont(new java.awt.Font("DejaVu Sans", 2, 16)); // NOI18N
-        listReference.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "DefaultFile1.wav", "DefaultFile2.wav", "DefaultFile3.wav", "DefaultFile4.wav", "DefaultFile5.wav", "DefaultFile6.wav", "DefaultFile7.wav", "DefaultFile8.wav" };
-            public int getSize() { return strings.length; }
-            public String getElementAt(int i) { return strings[i]; }
-        });
-        scrollReference.setViewportView(listReference);
-
-        labelReference.setFont(new java.awt.Font("DejaVu Sans", 3, 18)); // NOI18N
-        labelReference.setText("Reference");
-
-        exportFileButton.setFont(new java.awt.Font("Liberation Sans", 3, 12)); // NOI18N
+        exportFileButton.setFont(new java.awt.Font("Liberation Mono", 2, 14)); // NOI18N
         exportFileButton.setText("<html>Export<br>(.mp4)</html>");
-        exportFileButton.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 3, true));
+        exportFileButton.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED, null, java.awt.Color.gray));
+        exportFileButton.setBorderPainted(false);
         exportFileButton.addActionListener(this::exportFileButtonActionPerformed);
 
-        labelCustom.setFont(new java.awt.Font("DejaVu Sans", 3, 18)); // NOI18N
-        labelCustom.setText("Custom");
-        labelCustom.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        labelCustom.setFont(new java.awt.Font("Liberation Mono", 3, 18)); // NOI18N
+        labelCustom.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        labelCustom.setText("Custom Library");
 
-        importFileButton.setFont(new java.awt.Font("Liberation Sans", 3, 12)); // NOI18N
+        importFileButton.setFont(new java.awt.Font("Liberation Mono", 2, 14)); // NOI18N
         importFileButton.setText("<html>Import<br>(.wav)</html>");
-        importFileButton.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 3, true));
+        importFileButton.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED, null, java.awt.Color.gray));
+        importFileButton.setBorderPainted(false);
+        importFileButton.setMinimumSize(new java.awt.Dimension(45, 38));
+        importFileButton.setPreferredSize(new java.awt.Dimension(55, 45));
         importFileButton.addActionListener(this::importFileButtonActionPerformed);
+
+        labelReference.setFont(new java.awt.Font("Liberation Mono", 3, 18)); // NOI18N
+        labelReference.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        labelReference.setText("Default Library");
 
         javax.swing.GroupLayout panelTab_FilesLayout = new javax.swing.GroupLayout(panelTab_Files);
         panelTab_Files.setLayout(panelTab_FilesLayout);
@@ -102,47 +195,75 @@ public class GUI extends JFrame {
             panelTab_FilesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(scrollCustom)
             .addComponent(scrollReference)
+            .addComponent(jSeparator2)
             .addGroup(panelTab_FilesLayout.createSequentialGroup()
                 .addGroup(panelTab_FilesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(labelReference, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(labelCustom, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(panelTab_FilesLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(labelCustom, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(panelTab_FilesLayout.createSequentialGroup()
+                        .addGap(45, 45, 45)
+                        .addComponent(exportFileButton, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(47, 47, 47)
+                        .addComponent(importFileButton, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(panelTab_FilesLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(labelReference, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelTab_FilesLayout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(defaultLibarySeperator, javax.swing.GroupLayout.PREFERRED_SIZE, 295, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
-            .addGroup(panelTab_FilesLayout.createSequentialGroup()
-                .addGap(41, 41, 41)
-                .addComponent(exportFileButton, javax.swing.GroupLayout.DEFAULT_SIZE, 65, Short.MAX_VALUE)
-                .addGap(40, 40, 40)
-                .addComponent(importFileButton, javax.swing.GroupLayout.DEFAULT_SIZE, 65, Short.MAX_VALUE)
-                .addGap(44, 44, 44))
         );
         panelTab_FilesLayout.setVerticalGroup(
             panelTab_FilesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelTab_FilesLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(labelCustom)
+                .addGap(0, 0, 0)
+                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 3, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(scrollCustom, javax.swing.GroupLayout.DEFAULT_SIZE, 124, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(scrollCustom, javax.swing.GroupLayout.PREFERRED_SIZE, 136, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(labelReference)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(defaultLibarySeperator, javax.swing.GroupLayout.PREFERRED_SIZE, 6, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(scrollReference, javax.swing.GroupLayout.DEFAULT_SIZE, 216, Short.MAX_VALUE)
-                .addGap(18, 18, 18)
-                .addGroup(panelTab_FilesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(importFileButton)
-                    .addComponent(exportFileButton))
-                .addGap(18, 18, 18))
+                .addComponent(scrollReference, javax.swing.GroupLayout.PREFERRED_SIZE, 368, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(panelTab_FilesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(exportFileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(importFileButton, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(15, 15, 15))
         );
 
         TabbedPane.addTab("Files", panelTab_Files);
+
+        jList1.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.LOWERED));
+        jList1.setFont(new java.awt.Font("Liberation Mono", 2, 18)); // NOI18N
+        jList1.setModel(new javax.swing.AbstractListModel<String>() {
+            String[] strings = { "Vertical Bars", "Horizontal Bars", "TBA 1", "TBA 2" };
+            public int getSize() { return strings.length; }
+            public String getElementAt(int i) { return strings[i]; }
+        });
+        jList1.setSelectedIndex(0); // Default to Vertical Bars
+        jScrollPane1.setViewportView(jList1);
 
         javax.swing.GroupLayout panelTab_TypeLayout = new javax.swing.GroupLayout(panelTab_Type);
         panelTab_Type.setLayout(panelTab_TypeLayout);
         panelTab_TypeLayout.setHorizontalGroup(
             panelTab_TypeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGroup(panelTab_TypeLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 284, Short.MAX_VALUE)
+                .addContainerGap())
         );
         panelTab_TypeLayout.setVerticalGroup(
             panelTab_TypeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelTab_TypeLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 573, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         TabbedPane.addTab("Type", panelTab_Type);
@@ -151,25 +272,67 @@ public class GUI extends JFrame {
         panelTab_Color.setLayout(panelTab_ColorLayout);
         panelTab_ColorLayout.setHorizontalGroup(
             panelTab_ColorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGroup(panelTab_ColorLayout.createSequentialGroup()
+                .addComponent(jColorChooser1, javax.swing.GroupLayout.PREFERRED_SIZE, 320, Short.MAX_VALUE)
+                .addGap(1, 1, 1))
         );
         panelTab_ColorLayout.setVerticalGroup(
             panelTab_ColorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addComponent(jColorChooser1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         TabbedPane.addTab("Color", panelTab_Color);
+
+        jLabel1.setFont(new java.awt.Font("Liberation Mono", 1, 14)); // NOI18N
+        jLabel1.setText("Bars");
 
         javax.swing.GroupLayout panelTab_LayoutLayout = new javax.swing.GroupLayout(panelTab_Layout);
         panelTab_Layout.setLayout(panelTab_LayoutLayout);
         panelTab_LayoutLayout.setHorizontalGroup(
             panelTab_LayoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGroup(panelTab_LayoutLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(188, 188, 188)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.DEFAULT_SIZE, 1, Short.MAX_VALUE))
         );
         panelTab_LayoutLayout.setVerticalGroup(
             panelTab_LayoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGroup(panelTab_LayoutLayout.createSequentialGroup()
+                .addGroup(panelTab_LayoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(panelTab_LayoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel1))
+                    .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(434, 434, 434))
         );
+
+        jSpinner1.addChangeListener(e -> {
+            int bands = (Integer) jSpinner1.getValue();
+            // Recreate or reinitialize your visualizer panel inside the container frame
+        });
+
+        // Runs the visualizer inside the GUI panel w/ a Demo of Standard Bar Visualizer
+        int initialBands = 5;
+        visual = new StandardBarVisualizer(new Visualizer.RandomFrequencyData(initialBands), initialBands);
+        blueBackgroundPane.setLayout(new BorderLayout());
+        blueBackgroundPane.add(visual, BorderLayout.CENTER);
+
+        // Initialize jSpinner1 model and listener
+        jSpinner1.setModel(new SpinnerNumberModel(initialBands, 1, 128, 1));
+        jSpinner1.addChangeListener(e -> {
+            int bands = (Integer) jSpinner1.getValue();
+            visual.stop();
+            blueBackgroundPane.remove(visual);
+
+            visual = new StandardBarVisualizer(new Visualizer.RandomFrequencyData(bands), bands);
+            blueBackgroundPane.add(visual, BorderLayout.CENTER);
+            blueBackgroundPane.revalidate();
+            blueBackgroundPane.repaint();
+            visual.start();
+        });
 
         TabbedPane.addTab("Layout", panelTab_Layout);
 
@@ -186,126 +349,140 @@ public class GUI extends JFrame {
 
         TabbedPane.addTab("Configs", panelTab_Configs);
 
-        panelMedia_Controls.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        panelMedia_Controls.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
 
-        jLabel2.setFont(new java.awt.Font("SansSerif", 2, 36)); // NOI18N
-        jLabel2.setText("--:--");
+        labelCurrentDuration.setFont(new java.awt.Font("Liberation Mono", 2, 24)); // NOI18N
+        labelCurrentDuration.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        labelCurrentDuration.setText("--:--");
 
-        jLabel3.setFont(new java.awt.Font("SansSerif", 2, 36)); // NOI18N
-        jLabel3.setText("--:--");
+        labelMaxDuration.setFont(new java.awt.Font("Liberation Mono", 2, 24)); // NOI18N
+        labelMaxDuration.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        labelMaxDuration.setText("--:--");
+        labelMaxDuration.setToolTipText("");
 
-        button_Stop.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
-        button_Stop.setText("⏹");
-        button_Stop.setActionCommand("null");
-        button_Stop.setAlignmentX(1.0F);
-        button_Stop.setAlignmentY(1.0F);
-        button_Stop.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED, java.awt.Color.black, java.awt.Color.gray));
-        button_Stop.setBorderPainted(false);
-        button_Stop.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-        button_Stop.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        button_Stop.setMargin(new java.awt.Insets(4, 14, 4, 14));
-        button_Stop.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        seekBar.setMaximumSize(new java.awt.Dimension(32767, 28));
+        seekBar.setMinimumSize(new java.awt.Dimension(36, 28));
+        seekBar.setPreferredSize(new java.awt.Dimension(200, 28));
+        seekBar.addChangeListener(this::seekBarStateChanged);
 
-        button_Forward.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
-        button_Forward.setText("⏭");
-        button_Forward.setActionCommand("null");
-        button_Forward.setAlignmentX(1.0F);
-        button_Forward.setAlignmentY(1.0F);
-        button_Forward.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED, java.awt.Color.black, java.awt.Color.gray));
-        button_Forward.setBorderPainted(false);
-        button_Forward.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-        button_Forward.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        button_Forward.setMargin(new java.awt.Insets(4, 14, 4, 14));
-        button_Forward.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        skipBackButton.setFont(new java.awt.Font("Dialog", 1, 36)); // NOI18N
+        skipBackButton.setText("⏮");
+        skipBackButton.setActionCommand("null");
+        skipBackButton.setAlignmentX(1.0F);
+        skipBackButton.setAlignmentY(1.0F);
+        skipBackButton.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
+        skipBackButton.setBorderPainted(false);
+        skipBackButton.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        skipBackButton.setDoubleBuffered(true);
+        skipBackButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        skipBackButton.setMargin(new java.awt.Insets(4, 14, 4, 14));
+        skipBackButton.setPreferredSize(new java.awt.Dimension(45, 45));
+        skipBackButton.addActionListener(this::skipBackButtonActionPerformed);
 
-        button_Pause.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
-        button_Pause.setText("⏸");
-        button_Pause.setActionCommand("null");
-        button_Pause.setAlignmentX(1.0F);
-        button_Pause.setAlignmentY(1.0F);
-        button_Pause.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED, java.awt.Color.black, java.awt.Color.gray));
-        button_Pause.setBorderPainted(false);
-        button_Pause.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-        button_Pause.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        button_Pause.setMargin(new java.awt.Insets(4, 14, 4, 14));
-        button_Pause.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        skipForwardButton.setFont(new java.awt.Font("Dialog", 1, 36)); // NOI18N
+        skipForwardButton.setText("⏭");
+        skipForwardButton.setActionCommand("null");
+        skipForwardButton.setAlignmentX(1.0F);
+        skipForwardButton.setAlignmentY(1.0F);
+        skipForwardButton.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
+        skipForwardButton.setBorderPainted(false);
+        skipForwardButton.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        skipForwardButton.setDoubleBuffered(true);
+        skipForwardButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        skipForwardButton.setMargin(new java.awt.Insets(4, 14, 4, 14));
+        skipForwardButton.setPreferredSize(new java.awt.Dimension(45, 45));
+        skipForwardButton.addActionListener(this::skipForwardButtonActionPerformed);
 
-        button_Play.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
-        button_Play.setText(" ▶");
-        button_Play.setAlignmentX(1.0F);
-        button_Play.setAlignmentY(1.0F);
-        button_Play.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED, java.awt.Color.black, java.awt.Color.gray));
-        button_Play.setBorderPainted(false);
-        button_Play.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-        button_Play.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        button_Play.setMargin(new java.awt.Insets(4, 14, 4, 14));
-        button_Play.setVerticalAlignment(javax.swing.SwingConstants.TOP);
-        button_Play.addActionListener(this::button_PlayActionPerformed);
+        playButton.setFont(new java.awt.Font("Dialog", 1, 36)); // NOI18N
+        playButton.setText(" ▶");
+        playButton.setAlignmentX(1.0F);
+        playButton.setAlignmentY(1.0F);
+        playButton.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
+        playButton.setBorderPainted(false);
+        playButton.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        playButton.setDoubleBuffered(true);
+        playButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        playButton.setMargin(new java.awt.Insets(4, 14, 4, 14));
+        playButton.setPreferredSize(new java.awt.Dimension(45, 45));
+        playButton.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
+        playButton.addActionListener(this::playButtonActionPerformed);
 
-        buttonRewind.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
-        buttonRewind.setText("⏮");
-        buttonRewind.setActionCommand("null");
-        buttonRewind.setAlignmentX(1.0F);
-        buttonRewind.setAlignmentY(1.0F);
-        buttonRewind.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED, java.awt.Color.black, java.awt.Color.gray));
-        buttonRewind.setBorderPainted(false);
-        buttonRewind.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-        buttonRewind.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        buttonRewind.setMargin(new java.awt.Insets(4, 14, 4, 14));
-        buttonRewind.setVerticalAlignment(javax.swing.SwingConstants.TOP);
-        buttonRewind.addActionListener(this::buttonRewindActionPerformed);
+        pauseButton.setFont(new java.awt.Font("Dialog", 1, 36)); // NOI18N
+        pauseButton.setText("⏸");
+        pauseButton.setActionCommand("null");
+        pauseButton.setAlignmentX(1.0F);
+        pauseButton.setAlignmentY(1.0F);
+        pauseButton.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
+        pauseButton.setBorderPainted(false);
+        pauseButton.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        pauseButton.setDoubleBuffered(true);
+        pauseButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        pauseButton.setMargin(new java.awt.Insets(4, 14, 4, 14));
+        pauseButton.setPreferredSize(new java.awt.Dimension(45, 45));
+        pauseButton.addActionListener(this::pauseButtonActionPerformed);
+
+        stopButtonAction.setFont(new java.awt.Font("Dialog", 1, 36)); // NOI18N
+        stopButtonAction.setText("⏹");
+        stopButtonAction.setActionCommand("null");
+        stopButtonAction.setAlignmentX(1.0F);
+        stopButtonAction.setAlignmentY(1.0F);
+        stopButtonAction.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
+        stopButtonAction.setBorderPainted(false);
+        stopButtonAction.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        stopButtonAction.setDoubleBuffered(true);
+        stopButtonAction.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        stopButtonAction.setMargin(new java.awt.Insets(4, 14, 4, 14));
+        stopButtonAction.setPreferredSize(new java.awt.Dimension(45, 45));
+        stopButtonAction.addActionListener(this::stopButtonActionActionPerformed);
 
         javax.swing.GroupLayout panelMedia_ControlsLayout = new javax.swing.GroupLayout(panelMedia_Controls);
         panelMedia_Controls.setLayout(panelMedia_ControlsLayout);
         panelMedia_ControlsLayout.setHorizontalGroup(
             panelMedia_ControlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelMedia_ControlsLayout.createSequentialGroup()
+                .addContainerGap(364, Short.MAX_VALUE)
+                .addComponent(skipBackButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(playButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(pauseButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(stopButtonAction, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(skipForwardButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(330, 330, 330))
+            .addGroup(panelMedia_ControlsLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel2)
+                .addComponent(labelCurrentDuration)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(seekBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel3)
-                .addGap(12, 12, 12))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelMedia_ControlsLayout.createSequentialGroup()
-                .addContainerGap(340, Short.MAX_VALUE)
-                .addComponent(buttonRewind)
-                .addGap(18, 18, 18)
-                .addComponent(button_Play, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(18, 18, 18)
-                .addComponent(button_Pause, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(18, 18, 18)
-                .addComponent(button_Stop, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(18, 18, 18)
-                .addComponent(button_Forward)
-                .addContainerGap(361, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(labelMaxDuration)
+                .addContainerGap())
         );
 
-        panelMedia_ControlsLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {button_Pause, button_Play, button_Stop});
+        panelMedia_ControlsLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {pauseButton, playButton, stopButtonAction});
 
         panelMedia_ControlsLayout.setVerticalGroup(
             panelMedia_ControlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelMedia_ControlsLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(panelMedia_ControlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(button_Stop)
+                    .addComponent(stopButtonAction, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(panelMedia_ControlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(button_Pause)
-                        .addComponent(button_Play)
-                        .addComponent(buttonRewind)
-                        .addComponent(button_Forward)))
+                        .addComponent(pauseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(skipBackButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(skipForwardButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(playButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(panelMedia_ControlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(seekBar, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(panelMedia_ControlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGroup(panelMedia_ControlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(seekBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(labelMaxDuration)
+                    .addComponent(labelCurrentDuration))
                 .addContainerGap())
         );
 
-        panelMedia_ControlsLayout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {jLabel2, jLabel3});
-
-        panelMedia_ControlsLayout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {button_Forward, button_Pause, button_Play});
+        panelMedia_ControlsLayout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {pauseButton, playButton, skipForwardButton});
 
         seekBar.setValue(0);
 
@@ -319,26 +496,24 @@ public class GUI extends JFrame {
         );
         blueBackgroundPaneLayout.setVerticalGroup(
             blueBackgroundPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGap(0, 620, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(TabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 257, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(TabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 298, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(blueBackgroundPane)
-                .addContainerGap())
-            .addComponent(panelMedia_Controls, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(blueBackgroundPane))
+            .addComponent(panelMedia_Controls, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(TabbedPane)
+                    .addComponent(TabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 622, Short.MAX_VALUE)
                     .addComponent(blueBackgroundPane))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(panelMedia_Controls, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -347,31 +522,104 @@ public class GUI extends JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+// === Audio Loading ===
 
-    private void button_PlayActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_PlayActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_button_PlayActionPerformed
+    private void loadAudioFile(File selectedFile) {
+        AudioFile audioFile = new AudioFile(selectedFile.toPath());
+        try {
+            player = new Player(audioFile);
+            seekBar.setMinimum(0);
+            int totalMillis = (int) (player.getTotalTime() * 1000.0);
+            seekBar.setMaximum(totalMillis);
+            double totalSeconds = player.getTotalTime();
+            int minutes = (int) (totalSeconds / 60);
+            int seconds = (int) (totalSeconds % 60);
+            labelMaxDuration.setText(String.format("%02d:%02d", minutes, seconds));
+            labelCurrentDuration.setText("00:00");
+        } catch (UnsupportedAudioFileException | LineUnavailableException | IOException ex) {
+            logger.log(java.util.logging.Level.SEVERE, null, ex);
+        }
+    }
+// === Media Control Handlers ===
+    private void playButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playButtonActionPerformed
+        if (player == null && selectedFile != null) {
+            System.out.println("user.dir = " + System.getProperty("user.dir"));
+            System.out.println("looking for = " + selectedFile.getAbsolutePath());
+            if (!selectedFile.exists()) {
+                logger.log(Level.SEVERE, "File not found: {0}", selectedFile.getAbsolutePath());
+                return;
+            }
+            loadAudioFile(selectedFile);
+        }
+        if (player != null) {
+            try {
+                player.play();
+                progressTimer.start();
+            } catch (UnsupportedAudioFileException | LineUnavailableException | IOException ex) {
+                logger.log(Level.SEVERE, null, ex);
+            }
+        }
+    }//GEN-LAST:event_playButtonActionPerformed
+
+    private void pauseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pauseButtonActionPerformed
+        if (player != null) {
+            try {
+                player.pause();
+                progressTimer.stop();
+            } catch (UnsupportedAudioFileException | LineUnavailableException | IOException ex) {
+                logger.log(Level.SEVERE, null, ex);
+            }
+        }
+    }//GEN-LAST:event_pauseButtonActionPerformed
+
+    private void stopButtonActionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButtonActionActionPerformed
+        if (player != null) {
+            try {
+                player.stop();
+                player = null;
+                progressTimer.stop();
+                seekBar.setValue(0);
+                labelCurrentDuration.setText("--:--");
+                labelMaxDuration.setText("--:--");
+            } catch (UnsupportedAudioFileException | LineUnavailableException | IOException ex) {
+                logger.log(Level.SEVERE, null, ex);
+            }
+        }
+    }//GEN-LAST:event_stopButtonActionActionPerformed
+
+    private void skipBackButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipBackButtonActionPerformed
+        if (player != null) {
+            try {
+                player.skipBack();
+            } catch (UnsupportedAudioFileException | LineUnavailableException | IOException ex) {
+                logger.log(Level.SEVERE, null, ex);
+            }
+        }
+    }//GEN-LAST:event_skipBackButtonActionPerformed
+
+    private void skipForwardButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipForwardButtonActionPerformed
+        if (player != null) {
+            try {
+                player.skipForward();
+            } catch (UnsupportedAudioFileException | LineUnavailableException | IOException ex) {
+                logger.log(Level.SEVERE, null, ex);
+            }
+        }
+    }//GEN-LAST:event_skipForwardButtonActionPerformed
+
+    private void seekBarStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_seekBarStateChanged
+        if (seekBar.getValueIsAdjusting() && player != null) {
+//            int targetMillis = seekBar.getValue();
+        }
+    }//GEN-LAST:event_seekBarStateChanged
 
     private void importFileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importFileButtonActionPerformed
-        JFileChooser chooser = new JFileChooser(new File("user.home")); // creates a JFileChooser Window 
-        chooser.setDialogTitle("Choose a .wav file"); // Just titles the FileChooserWindow
-        chooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("WAV audio (*.wav)", "wav")); // Filters the files it can choose to just WAV audio files
-        chooser.setAcceptAllFileFilterUsed(false); // Prevents user changing the filter to all files.
 
-        int result = chooser.showOpenDialog(this);
-        if (result == JFileChooser.APPROVE_OPTION) {
-            File selected = chooser.getSelectedFile();
-            System.out.println("Selected: " + selected.getAbsolutePath()); // placeholder
-        }
     }//GEN-LAST:event_importFileButtonActionPerformed
 
     private void exportFileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportFileButtonActionPerformed
-        // TODO add your handling code here:
+        // TODO: exportfilebutton code
     }//GEN-LAST:event_exportFileButtonActionPerformed
-
-    private void buttonRewindActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonRewindActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_buttonRewindActionPerformed
 
     /**
      * @param args the command line arguments
@@ -383,45 +631,52 @@ public class GUI extends JFrame {
          * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
          */
         try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    UIManager.setLookAndFeel(info.getClassName());
                     break;
                 }
             }
-        } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
-            logger.log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (ClassNotFoundException | IllegalAccessException | InstantiationException | UnsupportedLookAndFeelException ex) {
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
-        //</editor-fold>
 
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new GUI().setVisible(true));
+        /* Create and display the form*/
+        EventQueue.invokeLater(() -> new GUI().setVisible(true));
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTabbedPane TabbedPane;
     private javax.swing.JDesktopPane blueBackgroundPane;
-    private javax.swing.JButton buttonRewind;
-    private javax.swing.JButton button_Forward;
-    private javax.swing.JButton button_Pause;
-    private javax.swing.JButton button_Play;
-    private javax.swing.JButton button_Stop;
+    private javax.swing.JSeparator defaultLibarySeperator;
     private javax.swing.JButton exportFileButton;
     private javax.swing.JButton importFileButton;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
+    private javax.swing.JColorChooser jColorChooser1;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JList<String> jList1;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JSeparator jSeparator2;
+    private javax.swing.JSpinner jSpinner1;
+    private javax.swing.JLabel labelCurrentDuration;
     private javax.swing.JLabel labelCustom;
+    private javax.swing.JLabel labelMaxDuration;
     private javax.swing.JLabel labelReference;
-    private javax.swing.JList<String> listCustom;
-    private javax.swing.JList<String> listReference;
     private javax.swing.JPanel panelMedia_Controls;
     private javax.swing.JPanel panelTab_Color;
     private javax.swing.JPanel panelTab_Configs;
     private javax.swing.JPanel panelTab_Files;
     private javax.swing.JPanel panelTab_Layout;
     private javax.swing.JPanel panelTab_Type;
+    private javax.swing.JButton pauseButton;
+    private javax.swing.JButton playButton;
+    private javax.swing.JList<File> playlistCustom;
+    private javax.swing.JList<String> playlistReference;
     private javax.swing.JScrollPane scrollCustom;
     private javax.swing.JScrollPane scrollReference;
     private javax.swing.JSlider seekBar;
+    private javax.swing.JButton skipBackButton;
+    private javax.swing.JButton skipForwardButton;
+    private javax.swing.JButton stopButtonAction;
     // End of variables declaration//GEN-END:variables
 }

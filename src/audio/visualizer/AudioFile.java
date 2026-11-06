@@ -4,6 +4,7 @@ import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import javax.sound.sampled.AudioSystem;
@@ -18,6 +19,7 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 public class AudioFile
 {
     private Path file;
+    private double[] monoDataCopy;
     
     public AudioFile(String filepath)
     {
@@ -109,15 +111,7 @@ public class AudioFile
         }
     }
     
-    // Retrieve and decode samples stored as encoded binary data?
-    // Returns an array of doubles representing the samples.
-    // firstSample = entry point/where to start reading data; should be an index.
-    // chunkSize = how many samples to grab for the array. 
-    // should we convert stereo (left and right speakers) to mono for simpler/faster processing? if so can write another method.
-    // SEE LINK: https://introcs.cs.princeton.edu/java/stdlib/javadoc/StdAudio.html#read(java.lang.String)
-    // ^ has method StdAudio.read() which reads an entire file of audio into an array of doubles.
-    // Converts audio to a 44,100 Hz sample rate and 16-bit samples.
-    // may want to use or riff on depending on what FFT needs, could load entire file and then pass chunks of array by index? 
+    // 
     private short[] getData() throws UnsupportedAudioFileException, IOException
     {
         short[] data = new short[(int) getFrameLength() / 2];
@@ -147,17 +141,91 @@ public class AudioFile
 
     }
     
-    public double[] getMonoData() throws UnsupportedAudioFileException, IOException {
-
-        // Take/store info returned by getData; declare variable to get number of audio channels.
-        short[] raw = getData(); 
-        int channels;
+    public double[] getMonoDataCopy() throws UnsupportedAudioFileException, IOException {
+        if (monoDataCopy == null) {
+            monoDataCopy = decodeMonoData();
+        }
+        
+        return monoDataCopy.clone();
+    }
+    
+    // Method that decodes audio data read by getData and prepares it for transformation by the FFT.
+    public double[] decodeMonoData() throws UnsupportedAudioFileException, IOException {
         
         // Open audio input stream and read .WAV, get its format:
         try (AudioInputStream audio = AudioSystem.getAudioInputStream(getFile())) {
-            channels = audio.getFormat().getChannels();
+            
+            AudioFormat format = audio.getFormat();
+            
+            int channels = format.getChannels();
+            int bytesPerSample = format.getSampleSizeInBits() / 8;
+            int frameSize = format.getFrameSize();
+            
+            if (format.getEncoding() != AudioFormat.Encoding.PCM_SIGNED || format.getSampleSizeInBits() != 16) {
+                throw new UnsupportedAudioFileException("Only 16-bit WAV files are currently supported.");
+            }
+            
+            if (channels < 1 || bytesPerSample != 2 || frameSize != channels * bytesPerSample) {
+                throw new UnsupportedAudioFileException("Unsupported channel or frame layout.");
+            }
+            
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            
+            byte[] bytes = new byte[8192];
+            int bytesRead;
+            
+            while ((bytesRead = audio.read(bytes)) != -1) {
+                if (bytesRead > 0) {
+                    output.write(bytes, 0, bytesRead);
+                }
+            }
+            
+            byte[] audioBytes = output.toByteArray();
+
+            if (audioBytes.length % frameSize != 0) {
+                throw new IOException(
+                        "Audio data ends with an incomplete frame.");
+            }
+
+            int frameCount = audioBytes.length / frameSize;
+            short[] rawSamples = new short[audioBytes.length / 2];
+
+            ByteOrder byteOrder;
+
+            // Handle both big/little endian:
+            if (format.isBigEndian()) {
+                byteOrder = ByteOrder.BIG_ENDIAN;
+            } else {
+                byteOrder = ByteOrder.LITTLE_ENDIAN;
+            }
+
+            ByteBuffer buffer = ByteBuffer.wrap(audioBytes);
+            buffer.order(byteOrder);
+            buffer.asShortBuffer().get(rawSamples);
+            
+            double[] mono = new double[frameCount];
+            
+            for (int frame = 0; frame < frameCount; frame++) {
+                double sum = 0.0;
+                                                                  // finds the array 
+                                                                  // index for each frame and channel.
+                                                                  // Say we have 2 channels; then for frame 0, we have right(1) and left(0). for left,
+                                                                  // 0 * 2 + 0 = 0. For right, 0 * 2 + 1 = 1. Next for frame 1: left = 1 * 2 + 0 = 2;
+                                                                  // right = 1 * 2 + 1 = 3, etc etc. Dividing each index by 32768.0 yields a floating pt
+                                                                  // value in the range -1 to 1 (must end in .0 to ensure floating point division!!).
+                
+                for (int channel = 0; channel < channels; channel++) {
+                    int index = frame * channels + channel;
+                    sum += rawSamples[index] / 32768.0;
+                }
+                
+                mono[frame] = sum / channels;
+            } 
+            
+            return mono;
         }
         
+       /*
         // ERROR HANDLING:
         // Handle weird results like no channel, or an amount we can't divide 1,024 samples between neatly:
         if (channels < 1 || raw.length % channels != 0) {
@@ -174,16 +242,11 @@ public class AudioFile
             
             // Normalize and store each channel's samples:
             for (int channel = 0; channel < channels; channel++) {
-                sum += raw[frame * channels + channel] / 32768.0; // raw[(current frame) * (number of channels) + (specific channel)] finds the array 
-                                                                  // index for each frame and channel.
-            }                                                     // Say we have 2 channels; then for frame 0, we have right(1) and left(0). for left,
-                                                                  // 0 * 2 + 0 = 0. For right, 0 * 2 + 1 = 1. Next for frame 1: left = 1 * 2 + 0 = 2;
-                                                                  // right = 1 * 2 + 1 = 3, etc etc. Dividing each index by 32768.0 yields a floating pt
-                                                                  // value in the range -1 to 1 (must end in .0 to ensure floating point division!!).
+                sum += raw[frame * channels + channel] / 32768.0; 
             mono[frame] = sum / channels; // Convert to mono by dividing total # of channels in a frame by total channel count; store the average in a mono
         }                                 // array.
 
-        return mono;
+        return mono;*/
        }
     }
 // NOTES FOR AUDIO DATA DECODING: integer value = lower byte + 256(higher byte); 

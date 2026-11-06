@@ -18,8 +18,7 @@ import javax.swing.Timer;
  * Subclasses only implement {@link #drawFrame(Graphics2D, int, int)}.
  */
 public abstract class Visualizer extends JPanel {
-
-    /** Anything that can produce one frame of band magnitudes, each in 0.0-1.0. */
+    
     public interface FrequencyDataSource {
         double[] nextFrame();
     }

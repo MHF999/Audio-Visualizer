@@ -103,4 +103,22 @@ public class Player
        
        return totalTime;
    }
+   
+   // Public accessor method to expose audio file to FFT:
+   public AudioFile getAudioFile() {
+       return audioFile;
+   }
+   
+   // Public accessor method to expose current frame to FFT:
+   public long getCurrentFrame() {
+       long currentPosition;
+       
+       if (playerState.equals("playing")) {
+           currentPosition = clip.getLongFramePosition(); // While playing, get current position.
+       } else {
+           currentPosition = Math.round(microPosition * audioFile.getSampleRate() / 1000000.0); // Convert microPosition to frames using sample rate.
+       }
+       
+       return currentPosition;
+   }
 }

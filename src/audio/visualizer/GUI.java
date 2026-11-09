@@ -19,6 +19,7 @@ public class GUI extends JFrame {
     private final DefaultListModel<File> customModel = new DefaultListModel<>(); // JList 
     private File selectedFile;
     private Visualizer visual;
+    private FFT fftData;
 
     /* === GUI Constructor Start === */
     public GUI() {
@@ -501,16 +502,15 @@ public class GUI extends JFrame {
 
     /* === Visualizer Creation === */
     private Visualizer createVisualizer(int index) {
-        Visualizer.FrequencyDataSource source = new Visualizer.RandomFrequencyData(32);
         return switch (index) {
             case 0 ->
-                new HorizontalBarVisualizer(source, 32);
+                new HorizontalBarVisualizer(fftData, 32);
             case 1 ->
-                new MirroredBarVisualizer(source, 32);
+                new MirroredBarVisualizer(fftData, 32);
             case 2 ->
-                new RadialBarVisualizer(source, 32);
+                new RadialBarVisualizer(fftData, 32);
             default ->
-                new StandardBarVisualizer(source, 32);
+                new StandardBarVisualizer(fftData, 32);
         };
     }
 
@@ -531,6 +531,7 @@ public class GUI extends JFrame {
         AudioFile audioFile = new AudioFile(selectedFile.toPath());
         try {
             player = new Player(audioFile);
+            fftData = new FFT(player);
             seekBar.setMinimum(0);
             int totalMillis = (int) (player.getTotalTime() * 1000.0);
             seekBar.setMaximum(totalMillis);
@@ -571,6 +572,7 @@ public class GUI extends JFrame {
                     visual = createVisualizer(visualStyleList.getSelectedIndex());
                     blueBackgroundPane.add(visual, BorderLayout.CENTER);
                     blueBackgroundPane.revalidate();
+                    blueBackgroundPane.repaint();
                 }
                 visual.start();
 

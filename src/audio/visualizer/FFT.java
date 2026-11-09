@@ -25,7 +25,7 @@ public class FFT implements Visualizer.FrequencyDataSource
                                        // provided by Apache Commons Numbers.
 
     private final int chunkSize = 2048;
-    private final int bandCount = 32;
+    private int bandCount = 32;
     
     // Constructor to initialize player for the FFT object:
     public FFT(Player player) throws UnsupportedAudioFileException, IOException {
@@ -178,6 +178,13 @@ public class FFT implements Visualizer.FrequencyDataSource
         }
 
         return bands;
+    }
+    
+    
+    @Override
+    public void updateBands(int number)
+    {
+        bandCount = number;
     }
     
     @Override

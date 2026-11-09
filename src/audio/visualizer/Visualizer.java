@@ -21,15 +21,21 @@ public abstract class Visualizer extends JPanel {
     
     public interface FrequencyDataSource {
         double[] nextFrame();
+        void updateBands(int number);
     }
 
     /** Fake data that loosely behaves like music: more energy in the low bands. */
     public static class RandomFrequencyData implements FrequencyDataSource {
-        private final double[] frame;
+        private double[] frame;
         private final Random rng = new Random();
 
         public RandomFrequencyData(int bands) {
             this.frame = new double[bands];
+        }
+        
+        public void updateBands(int number)
+        {
+            frame = new double[number];
         }
 
         @Override

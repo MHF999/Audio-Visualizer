@@ -28,8 +28,7 @@ public class StandardBarVisualizer extends Visualizer {
             int barHeight = (int) (bars[i] * h);
 
             // Hue shifts from green (low bars) toward red (high bars).
-            float hue = (float) (0.33 * (1.0 - bars[i]));
-            g2.setColor(Color.getHSBColor(hue, 0.85f, 1.0f));
+            g2.setColor(colorFor(bars[i]));
             g2.fillRect(x, h - barHeight, (int) barWidth, barHeight);
 
             // Peak cap

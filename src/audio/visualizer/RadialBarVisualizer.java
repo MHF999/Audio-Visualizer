@@ -1,7 +1,6 @@
 package audio.visualizer;
 
 import java.awt.BasicStroke;
-import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
@@ -57,8 +56,7 @@ public class RadialBarVisualizer extends Visualizer {
             double length = side[band] * maxLength;
 
             // Same colour scheme as the other visualizers: green (low) to red (high).
-            float hue = (float) (0.33 * (1.0 - side[band]));
-            g2.setColor(Color.getHSBColor(hue, 0.85f, 1.0f));
+            g2.setColor(colorFor(side[band]));
 
             for (int mirror = 0; mirror < 2; mirror++) {
                 g2.setTransform(original);

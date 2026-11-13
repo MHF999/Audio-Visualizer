@@ -44,6 +44,9 @@ public abstract class Visualizer extends JPanel {
         }
     }
 
+    /** Colour picked by the user, or null to use the default green (quiet) to red (loud) scheme. */
+    private Color barColor = null;
+
     protected static final int FPS = 60;
     protected static final double FALL_SPEED = 0.02;       // how fast bars drop per frame
     protected static final double PEAK_FALL_SPEED = 0.005; // how fast the peak caps drop
@@ -88,6 +91,29 @@ public abstract class Visualizer extends JPanel {
             // Peak cap sticks at the highest recent value, then slowly drops.
             peaks[i] = bars[i] > peaks[i] ? bars[i] : Math.max(0, peaks[i] - PEAK_FALL_SPEED);
         }
+    }
+
+    /** Sets the bar colour. Pass null to go back to the default green-to-red scheme. */
+    public void setBarColor(Color color) {
+        this.barColor = color;
+        repaint();
+    }
+
+    /** The chosen bar colour, or null if the default green-to-red scheme is in use. */
+    public Color getBarColor() {
+        return barColor;
+    }
+
+    /**
+     * Colour for a bar at the given level (0.0-1.0): the chosen colour if there
+     * is one, otherwise the default scheme (green when quiet, red when loud).
+     * Subclasses use this instead of picking their own colours.
+     */
+    protected Color colorFor(double level) {
+        if (barColor != null) {
+            return barColor;
+        }
+        return Color.getHSBColor((float) (0.33 * (1.0 - level)), 0.85f, 1.0f);
     }
 
     private static double clamp(double v) {

@@ -59,8 +59,7 @@ public class MirroredBarVisualizer extends Visualizer {
         double barHeight = value * h;
 
         // Same colour scheme as StandardBarVisualizer: green (low) to red (high).
-        float hue = (float) (0.33 * (1.0 - value));
-        g2.setColor(Color.getHSBColor(hue, 0.85f, 1.0f));
+        g2.setColor(colorFor(value));
         g2.fill(new Rectangle2D.Double(x, h - barHeight, barWidth, barHeight));
 
         // Peak cap

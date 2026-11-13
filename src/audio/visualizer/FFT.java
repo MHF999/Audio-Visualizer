@@ -130,7 +130,7 @@ public class FFT implements Visualizer.FrequencyDataSource
     }
 
     // Groups the spectrum into frequency bands. Each returned value is in the range 0.0 to 1.0.
-    public double[] getBands(int bandCount) {
+   public double[] getBands(int bandCount) {
 
         if (bandCount <= 0) {
             throw new IllegalArgumentException(
@@ -142,12 +142,18 @@ public class FFT implements Visualizer.FrequencyDataSource
 
         double nyquist = getNyquistFrequency();
         double binWidth = sampleRate / (double) samples.length;
+        
+        //BIG CHANGE TO FFT STARTS HERE: logarithmic scaling
+    
+        double minFrequency = binWidth; // this is new
 
         for (int band = 0; band < bandCount; band++) {
 
-            double lowFrequency = band * nyquist / bandCount;
+        double lowFrequency = minFrequency * // this is new
+        Math.pow(nyquist / minFrequency, band / (double) bandCount);
 
-            double highFrequency = (band + 1) * nyquist / bandCount;
+        double highFrequency = minFrequency * // and this is new!
+        Math.pow(nyquist / minFrequency, (band + 1) / (double) bandCount);
 
             int startBin = (int) Math.ceil(lowFrequency / binWidth);
 
@@ -172,9 +178,9 @@ public class FFT implements Visualizer.FrequencyDataSource
                 strongestMagnitude = Math.max(
                         strongestMagnitude, magnitudes[bin]);
             }
-
-            bands[band] = Math.max(
-                    0.0, Math.min(1.0, strongestMagnitude));
+            double gain = 5.0;
+            bands[band] = Math.max(0.0, Math.min(1.0, strongestMagnitude * gain)); // new w/ gain multiplication
+            //bands[band] = Math.max(0.0, Math.min(1.0, strongestMagnitude));
         }
 
         return bands;
@@ -184,6 +190,7 @@ public class FFT implements Visualizer.FrequencyDataSource
     public double[] nextFrame() {
         loadData();
         runFFT();
+        
         return getBands(bandCount);
     }
 

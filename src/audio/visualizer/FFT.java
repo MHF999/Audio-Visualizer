@@ -53,11 +53,17 @@ public class FFT implements Visualizer.FrequencyDataSource
     public void loadData() {
     long currentFrame = player.getCurrentFrame();
 
-    if (currentFrame < 0 || currentFrame >= allSamples.length) { 
-        throw new IllegalStateException("Player position is outside the audio data range.");
+    samples = new double[chunkSize];
+
+    // new: return null data when playback is finished (was throwing error before) 
+    if (currentFrame >= allSamples.length) {
+        transformedData = null;
+        return;
     }
 
-    samples = new double[chunkSize];
+    if (currentFrame < 0) {
+        throw new IllegalStateException("Player position cannot be negative.");
+    }
 
     int firstSample = Math.toIntExact(currentFrame);
 

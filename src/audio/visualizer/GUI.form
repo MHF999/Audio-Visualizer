@@ -365,7 +365,7 @@
                     </Property>
                   </Properties>
                   <AuxValues>
-                    <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="visualStyleList.setSelectedIndex(3); // GUI starts with Horizontal Visualizer prepared"/>
+                    <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="visualStyleList.setSelectedIndex(3); // GUI starts with Vertical Visualizer prepared"/>
                     <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
                   </AuxValues>
                 </Component>

@@ -35,9 +35,6 @@ public class GUI extends JFrame {
                 if (fileName != null) {
                     playlistCustom.clearSelection();
                     library.select(fileName);
-                    //DELETE if (library.getSelected() != null) {
-                    //  selectedFile = library.getSelected().getFile();
-                    //   }
                 }
             }
         });
@@ -61,7 +58,6 @@ public class GUI extends JFrame {
                 if (f != null) {
                     playlistDefault.clearSelection();
                     library.select(f.getName());
-                    //DELETE  selectedFile = f;
                 }
             }
         });
@@ -89,11 +85,7 @@ public class GUI extends JFrame {
                 double fraction = e.getX() / (double) seekBar.getWidth();
                 int value = Math.min(seekBar.getMaximum(), Math.max(0, (int) (fraction * seekBar.getMaximum())));
                 player.seekTo(value);
-                updateTimeDisplay(); // newly added function to sync seek when paused.
-                /* Older code, re-implement or delete.
-                labelCurrentDuration.setText(String.format("%02d:%02d", value / 60000, (value / 1000) % 60)); // added to update seekbar
-                player.seekTo(value);
-                 */
+                updateTimeDisplay(); // newly added function to sync seek when paused. 
             }
         });
 
@@ -284,7 +276,7 @@ public class GUI extends JFrame {
             public int getSize() { return strings.length; }
             public String getElementAt(int i) { return strings[i]; }
         });
-        visualStyleList.setSelectedIndex(3); // GUI starts with Horizontal Visualizer prepared
+        visualStyleList.setSelectedIndex(3); // GUI starts with Vertical Visualizer prepared
         jScrollPane1.setViewportView(visualStyleList);
 
         labelVisualizerStyle.setFont(new java.awt.Font("SansSerif", 3, 18)); // NOI18N
@@ -661,19 +653,19 @@ public class GUI extends JFrame {
         if (player != null) {
             try {
                 player.stop();
-
-                // Resets visual and fftData so a new one can load next time play is hit.
+                // Resets visual so a new one can load next time play is ckcked.
                 if (visual != null) {
                     visual.stop();
-                    player = null;
-                    fftData = null;
-                    showVisualizer(visualStyleList.getSelectedIndex());
                 }
+                player = null;
+                fftData = null;
+                showVisualizer(visualStyleList.getSelectedIndex());
 
                 progressTimer.stop();
                 seekBar.setValue(0);
                 labelCurrentDuration.setText("--:--");
                 labelMaxDuration.setText("--:--");
+                
             } catch (UnsupportedAudioFileException | LineUnavailableException | IOException ex) {
                 logger.log(Level.SEVERE, null, ex);
             }

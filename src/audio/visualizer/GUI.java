@@ -3,23 +3,26 @@ package audio.visualizer;
 import java.util.logging.*;
 import javax.swing.*;
 import java.io.*;
-import java.awt.*; 
+import java.awt.*;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
 /**
  *
- * @author snapoles
+ * @author Steven
  */
 public class GUI extends JFrame {
 
     private static final Logger logger = Logger.getLogger(GUI.class.getName());
     private final Timer progressTimer; // Timer Declaration for use in time management regarding seekBar and labelDuration
     private Player player; // Player Declaration for use in button controls
-    private final DefaultListModel<File> customModel = new DefaultListModel<>(); // JList 
-    private File selectedFile;
+    private Library library = new Library();
+    private DefaultListModel<File> customModel = new DefaultListModel<>(); // JList 
+    // DELETE  private File selectedFile;
     private Visualizer visual;
     private Color barColor; // colour picked in the Type tab; null = default green-to-red
+    private int barCount = 32; // number of bars/bands in the visualizer
+    private FFT fftData;
 
     /* === GUI Constructor Start === */
     public GUI() {
@@ -31,7 +34,10 @@ public class GUI extends JFrame {
                 String fileName = playlistDefault.getSelectedValue();
                 if (fileName != null) {
                     playlistCustom.clearSelection();
-                    selectedFile = new File("Library", fileName);
+                    library.select(fileName);
+                    //DELETE if (library.getSelected() != null) {
+                    //  selectedFile = library.getSelected().getFile();
+                    //   }
                 }
             }
         });
@@ -54,7 +60,8 @@ public class GUI extends JFrame {
                 File f = playlistCustom.getSelectedValue();
                 if (f != null) {
                     playlistDefault.clearSelection();
-                    selectedFile = f;
+                    library.select(f.getName());
+                    //DELETE  selectedFile = f;
                 }
             }
         });
@@ -65,13 +72,6 @@ public class GUI extends JFrame {
         progressTimer = new Timer(100, e -> {
             if (player != null && !seekBar.getValueIsAdjusting()) {
                 updateTimeDisplay(); // newly added function to sync seek when paused.
-                /* Legacy
-                int currentMillis = (int) (player.getCurrentTime() * 1000.0);
-                seekBar.setValue(currentMillis); // updates the slider's position value to the current millisecond.
-                double currentSeconds = player.getCurrentTime();
-                int minutes = (int) (currentSeconds / 60);
-                int seconds = (int) (currentSeconds % 60);
-                labelCurrentDuration.setText(String.format("%02d:%02d", minutes, seconds)); */
             }
         });
         /*=== Seek-On-Click Handler ===*/
@@ -109,13 +109,14 @@ public class GUI extends JFrame {
                 playButtonActionPerformed(null);
             }
         });
-
         /*=== Compact Color Picker ===*/
+        // @author Carson
         // The standard chooser tabs (swatches, HSV, RGB...) are much wider than this side
         // panel, so half of them was cut off and could not be reached. Swap them for one
         // compact panel that fits: a colour palette, "Custom..." (the full colour dialog)
         // and "Reset to Default". See CompactColorPanel.java.
-        jColorChooser1.setChooserPanels(new javax.swing.colorchooser.AbstractColorChooserPanel[] {
+
+        jColorChooser1.setChooserPanels(new javax.swing.colorchooser.AbstractColorChooserPanel[]{
             new CompactColorPanel(this::applyBarColor, this::resetBarColor)
         });
         jColorChooser1.setPreviewPanel(new JPanel()); // hide the sample-text preview
@@ -123,6 +124,21 @@ public class GUI extends JFrame {
             // The chooser wraps the preview in a box titled "Preview"; clear that title.
             ((JComponent) jColorChooser1.getPreviewPanel().getParent()).setBorder(BorderFactory.createEmptyBorder());
         }
+        /*=== Bar Count Adjuster Handler ===*/
+        // Even steps keep Mirrored and Radial symmetrical (they split bars into two halves).
+        barAdjuster.setModel(new SpinnerNumberModel(32, 4, 100, 2));
+        barAdjuster.addChangeListener(e -> {
+            barCount = (Integer) barAdjuster.getValue();
+            if (visual != null) {
+                boolean wasRunning = visual.isRunning();
+                showVisualizer(visualStyleList.getSelectedIndex());
+                if (wasRunning) {
+                    visual.start();
+                }
+            }
+        });
+        // Handles populating Custom Library between start ups as a form of persistence.
+        refreshLibraryList();
     }
 
     /*=== GUI Constructor END ===*/
@@ -132,7 +148,7 @@ public class GUI extends JFrame {
      * regenerated by the Form Editor.
      */
     @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">                          
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         TabbedPane = new javax.swing.JTabbedPane();
@@ -141,7 +157,7 @@ public class GUI extends JFrame {
         playlistCustom = new javax.swing.JList<>();
         scrollReference = new javax.swing.JScrollPane();
         playlistDefault = new javax.swing.JList<>();
-        exportFileButton = new JButton();
+        deleteFileButton = new JButton();
         labelCustom = new javax.swing.JLabel();
         importFileButton = new javax.swing.JButton();
         labelReference = new javax.swing.JLabel();
@@ -190,13 +206,14 @@ public class GUI extends JFrame {
         scrollReference.setViewportView(playlistDefault);
         playlistDefault.getAccessibleContext().setAccessibleDescription("");
 
-        exportFileButton.setFont(new java.awt.Font("SansSerif", 3, 12)); // NOI18N
-        exportFileButton.setText("<html>Export<br>(.mp4)</html>");
-        exportFileButton.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
-        exportFileButton.setBorderPainted(false);
-        exportFileButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        exportFileButton.setMinimumSize(new java.awt.Dimension(45, 38));
-        exportFileButton.setPreferredSize(new java.awt.Dimension(55, 45));
+        deleteFileButton.setFont(new java.awt.Font("SansSerif", 3, 12)); // NOI18N
+        deleteFileButton.setText("<html><center>Delete<br>File</center></html>");
+        deleteFileButton.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        deleteFileButton.setBorderPainted(false);
+        deleteFileButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        deleteFileButton.setMinimumSize(new java.awt.Dimension(45, 38));
+        deleteFileButton.setPreferredSize(new java.awt.Dimension(55, 45));
+        deleteFileButton.addActionListener(this::deleteFileButtonActionPerformed);
 
         labelCustom.setFont(new java.awt.Font("SansSerif", 3, 18)); // NOI18N
         labelCustom.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
@@ -204,7 +221,7 @@ public class GUI extends JFrame {
         labelCustom.setDoubleBuffered(true);
 
         importFileButton.setFont(new java.awt.Font("SansSerif", 3, 12)); // NOI18N
-        importFileButton.setText("<html>Import<br> (.wav)</html>");
+        importFileButton.setText("<html><center>Import<br> (.wav)</center></html>");
         importFileButton.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
         importFileButton.setBorderPainted(false);
         importFileButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -231,7 +248,7 @@ public class GUI extends JFrame {
                 .addContainerGap())
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelTab_FilesLayout.createSequentialGroup()
                 .addGap(0, 0, Short.MAX_VALUE)
-                .addComponent(exportFileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(deleteFileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(24, 24, 24)
                 .addComponent(importFileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(26, 26, 26))
@@ -253,7 +270,7 @@ public class GUI extends JFrame {
                 .addComponent(scrollReference, javax.swing.GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(panelTab_FilesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(exportFileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(deleteFileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(importFileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(13, 13, 13))
         );
@@ -512,12 +529,15 @@ public class GUI extends JFrame {
         );
 
         pack();
-    }// </editor-fold>                        
+    }// </editor-fold>//GEN-END:initComponents
+
 
     /* === Visualizer Color === */
+    // @author Creation
     // Uses a colour picked in the Type tab. It is remembered, so it carries over
     // when the visualizer style is changed.
     private void applyBarColor(Color color) {
+        // This is never read, we might be able to remove this line.
         barColor = color;
         if (visual != null) {
             visual.setBarColor(color);
@@ -529,20 +549,32 @@ public class GUI extends JFrame {
         applyBarColor(null);
     }
 
+    /* === Refresh Library List === */
+    private void refreshLibraryList() {
+        customModel.clear();
+        for (AudioFile a : library.getAudioFiles()) {
+            if (!a.getName().startsWith("default_")) {
+                customModel.addElement(a.getFile());
+            }
+        }
+    }
+
     /* === Visualizer Creation === */
     private Visualizer createVisualizer(int index) {
-        Visualizer.FrequencyDataSource source = new Visualizer.RandomFrequencyData(32);
+        // The line below resolved an issue where fftData being null before a
+        // file loaded, causing a null ptr exception on timer tick. Source prevents this issue
+        Visualizer.FrequencyDataSource source = fftData != null ? fftData : new Visualizer.RandomFrequencyData(barCount);
         Visualizer created = switch (index) {
             case 0 ->
-                new HorizontalBarVisualizer(source, 32);
+                new HorizontalBarVisualizer(source, barCount);
             case 1 ->
-                new MirroredBarVisualizer(source, 32);
+                new MirroredBarVisualizer(source, barCount);
             case 2 ->
-                new RadialBarVisualizer(source, 32);
+                new RadialBarVisualizer(source, barCount);
             default ->
-                new StandardBarVisualizer(source, 32);
+                new StandardBarVisualizer(source, barCount);
         };
-        created.setBarColor(barColor); // keep the chosen colour when the style changes
+        created.setBarColor(barColor);
         return created;
     }
 
@@ -563,6 +595,7 @@ public class GUI extends JFrame {
         AudioFile audioFile = new AudioFile(selectedFile.toPath());
         try {
             player = new Player(audioFile);
+            fftData = new FFT(player);
             seekBar.setMinimum(0);
             int totalMillis = (int) (player.getTotalTime() * 1000.0);
             seekBar.setMaximum(totalMillis);
@@ -585,15 +618,16 @@ public class GUI extends JFrame {
         labelCurrentDuration.setText(String.format("%02d:%02d", millis / 60000, (millis / 1000) % 60));
     }
 // === Media Control Handlers ===
-    private void playButtonActionPerformed(java.awt.event.ActionEvent evt) {                                           
-        if (player == null && selectedFile != null) {
-            System.out.println("user.dir = " + System.getProperty("user.dir"));
-            System.out.println("looking for = " + selectedFile.getAbsolutePath());
-            if (!selectedFile.exists()) {
-                logger.log(Level.SEVERE, "File not found: {0}", selectedFile.getAbsolutePath());
+    private void playButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playButtonActionPerformed
+        AudioFile current = library.getSelected();
+        if (player == null && current != null) {
+            File f = current.getFile();
+            if (!f.exists()) {
+                logger.log(Level.SEVERE, "File not found: {0}", f.getAbsolutePath());
                 return;
             }
-            loadAudioFile(selectedFile);
+            loadAudioFile(f);
+            showVisualizer(visualStyleList.getSelectedIndex());
         }
         if (player != null) {
             try {
@@ -609,9 +643,9 @@ public class GUI extends JFrame {
                 logger.log(Level.SEVERE, null, ex);
             }
         }
-    }                                          
+    }//GEN-LAST:event_playButtonActionPerformed
 
-    private void pauseButtonActionPerformed(java.awt.event.ActionEvent evt) {                                            
+    private void pauseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pauseButtonActionPerformed
         if (player != null && visual != null) {
             try {
                 player.pause();
@@ -621,17 +655,18 @@ public class GUI extends JFrame {
                 logger.log(Level.SEVERE, null, ex);
             }
         }
-    }                                           
+    }//GEN-LAST:event_pauseButtonActionPerformed
 
-    private void stopButtonActionActionPerformed(java.awt.event.ActionEvent evt) {                                                 
+    private void stopButtonActionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButtonActionActionPerformed
         if (player != null) {
             try {
                 player.stop();
-                player = null;
+
+                // Resets visual and fftData so a new one can load next time play is hit.
                 if (visual != null) {
                     visual.stop();
-                    // Swap in a fresh, idle visualizer so the next song's Play finds
-                    // one already attached to the window.
+                    player = null;
+                    fftData = null;
                     showVisualizer(visualStyleList.getSelectedIndex());
                 }
 
@@ -643,9 +678,9 @@ public class GUI extends JFrame {
                 logger.log(Level.SEVERE, null, ex);
             }
         }
-    }                                                
+    }//GEN-LAST:event_stopButtonActionActionPerformed
 
-    private void skipBackButtonActionPerformed(java.awt.event.ActionEvent evt) {                                               
+    private void skipBackButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipBackButtonActionPerformed
         if (player != null) {
             try {
                 player.skipBack();
@@ -654,9 +689,9 @@ public class GUI extends JFrame {
                 logger.log(Level.SEVERE, null, ex);
             }
         }
-    }                                              
+    }//GEN-LAST:event_skipBackButtonActionPerformed
 
-    private void skipForwardButtonActionPerformed(java.awt.event.ActionEvent evt) {                                                  
+    private void skipForwardButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipForwardButtonActionPerformed
         if (player != null) {
             try {
                 player.skipForward();
@@ -665,9 +700,9 @@ public class GUI extends JFrame {
                 logger.log(Level.SEVERE, null, ex);
             }
         }
-    }                                                 
+    }//GEN-LAST:event_skipForwardButtonActionPerformed
 
-    private void importFileButtonActionPerformed(java.awt.event.ActionEvent evt) {                                                 
+    private void importFileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importFileButtonActionPerformed
         JFileChooser chooser = new JFileChooser(System.getProperty("user.home"));
         chooser.setDialogTitle("Choose a .wav file");
         chooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("WAV audio (*.wav)", "wav"));
@@ -675,7 +710,13 @@ public class GUI extends JFrame {
         int result = chooser.showOpenDialog(this);
 
         if (result == JFileChooser.APPROVE_OPTION) {
-            File selected = chooser.getSelectedFile();
+            File picked = chooser.getSelectedFile();
+            library.importWav(picked.getAbsolutePath()); // copies the file into the Library folder
+            File selected = new File(library.getLibraryLocation(), picked.getName());
+            if (!selected.exists()) {
+                return; // import failed
+            }
+//             File selected = chooser.getSelectedFile();
             if (!customModel.contains(selected)) {
                 customModel.addElement(selected);
             }
@@ -686,7 +727,7 @@ public class GUI extends JFrame {
             if (player != null) {
                 try {
                     player.stop();
-                } catch (Exception ex) {
+                } catch (IOException | LineUnavailableException | UnsupportedAudioFileException ex) {
                     // handle or log exception
                 }
             }
@@ -698,11 +739,32 @@ public class GUI extends JFrame {
                 blueBackgroundPane.revalidate();
                 blueBackgroundPane.repaint();
             }
-
-            selectedFile = selected;
             loadAudioFile(selected);
         }
-    }                                                
+    }//GEN-LAST:event_importFileButtonActionPerformed
+
+    private void deleteFileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteFileButtonActionPerformed
+        File target = playlistCustom.getSelectedValue();
+        if (target == null || target.getName().startsWith("default_")) {
+            return;
+        }
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Permanently delete \"" + target.getName() + "\" from the Library folder?",
+                "Delete File",
+                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+        stopButtonActionActionPerformed(null); // releases the file before deleting
+        for (AudioFile a : new java.util.ArrayList<>(library.getAudioFiles())) {
+            if (a.getName().equals(target.getName())) {
+                library.delete(a);
+                break;
+            }
+        }
+        customModel.removeElement(target);
+        playlistCustom.clearSelection();
+    }//GEN-LAST:event_deleteFileButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -728,11 +790,11 @@ public class GUI extends JFrame {
         EventQueue.invokeLater(() -> new GUI().setVisible(true));
     }
 
-    // Variables declaration - do not modify                     
+    // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTabbedPane TabbedPane;
     private final javax.swing.JSpinner barAdjuster = new javax.swing.JSpinner();
     private javax.swing.JDesktopPane blueBackgroundPane;
-    private javax.swing.JButton exportFileButton;
+    private javax.swing.JButton deleteFileButton;
     private javax.swing.JButton importFileButton;
     private javax.swing.JColorChooser jColorChooser1;
     private javax.swing.JLabel jLabel1;
@@ -758,5 +820,5 @@ public class GUI extends JFrame {
     private javax.swing.JButton skipForwardButton;
     private javax.swing.JButton stopButtonAction;
     private javax.swing.JList<String> visualStyleList;
-    // End of variables declaration                   
+    // End of variables declaration//GEN-END:variables
 }

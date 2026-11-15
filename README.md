@@ -23,8 +23,8 @@ There are several free converters online, including the following: https://tinyu
 * default\_1.wav: "Never Gonna Give You Up" by Rick Astley from https://tinyurl.com/cuhxj643
 * default\_2.wav: "Guy thinks I can't play Rush E and calls me a liar" by Fanchen from https://tinyurl.com/36ekjxh9
 * default\_3.wav: "Monster Hunter Frontier Z Main Theme OST" by Capcom from https://tinyurl.com/3bfakr7r
-* default\_4.wav: "???" by ??? from ???
-* default\_5.wav: "???" by ??? from ???
+* default\_4.wav: "Prelude" by Square Enix from https://tinyurl.com/yc3ke7jv
+* default\_5.wav: "Canidate's Concerto" by Konami from https://tinyurl.com/35xc3fr9
 * default\_6.wav: "???" by ??? from ???
 * default\_7.wav: "???" by ??? from ???
 

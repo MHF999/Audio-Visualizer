@@ -10,21 +10,25 @@ import javax.swing.JPanel;
 import javax.swing.Timer;
 
 /**
- * Base class for frequency visualizers. It owns everything that is not
- * specific to how the data is drawn: pulling frames from a
- * FrequencyDataSource about 60 times per second, smoothing the band
- * magnitudes (with falling peak caps), and driving the repaint timer.
+ * Base class for frequency visualizers. It owns everything that is not specific
+ * to how the data is drawn: pulling frames from a FrequencyDataSource about 60
+ * times per second, smoothing the band magnitudes (with falling peak caps), and
+ * driving the repaint timer.
  *
  * Subclasses only implement {@link #drawFrame(Graphics2D, int, int)}.
  */
 public abstract class Visualizer extends JPanel {
-    
+
     public interface FrequencyDataSource {
+
         double[] nextFrame();
     }
 
-    /** Fake data that loosely behaves like music: more energy in the low bands. */
+    /**
+     * Fake data that loosely behaves like music: more energy in the low bands.
+     */
     public static class RandomFrequencyData implements FrequencyDataSource {
+
         private final double[] frame;
         private final Random rng = new Random();
 
@@ -44,7 +48,10 @@ public abstract class Visualizer extends JPanel {
         }
     }
 
-    /** Colour picked by the user, or null to use the default green (quiet) to red (loud) scheme. */
+    /**
+     * Colour picked by the user, or null to use the default green (quiet) to
+     * red (loud) scheme.
+     */
     private Color barColor = null;
 
     protected static final int FPS = 60;
@@ -54,9 +61,14 @@ public abstract class Visualizer extends JPanel {
     private final FrequencyDataSource source;
     private final Timer timer;
 
-    /** Smoothed magnitude of each band, 0.0-1.0. Read by subclasses when drawing. */
+    /**
+     * Smoothed magnitude of each band, 0.0-1.0. Read by subclasses when
+     * drawing.
+     */
     protected final double[] bars;
-    /** Peak-cap level of each band, 0.0-1.0. Read by subclasses when drawing. */
+    /**
+     * Peak-cap level of each band, 0.0-1.0. Read by subclasses when drawing.
+     */
     protected final double[] peaks;
 
     protected Visualizer(FrequencyDataSource source, int bands) {
@@ -93,13 +105,19 @@ public abstract class Visualizer extends JPanel {
         }
     }
 
-    /** Sets the bar colour. Pass null to go back to the default green-to-red scheme. */
+    /**
+     * Sets the bar colour. Pass null to go back to the default green-to-red
+     * scheme.
+     */
     public void setBarColor(Color color) {
         this.barColor = color;
         repaint();
     }
 
-    /** The chosen bar colour, or null if the default green-to-red scheme is in use. */
+    /**
+     * The chosen bar colour, or null if the default green-to-red scheme is in
+     * use.
+     */
     public Color getBarColor() {
         return barColor;
     }
@@ -150,10 +168,14 @@ public abstract class Visualizer extends JPanel {
         drawFrame(g2, getWidth(), getHeight());
         g2.dispose();
     }
+    // Added by Steven; trying to test if this can help smooth out the bar adjuster, delete if needed.
+    public boolean isRunning() {
+        return timer.isRunning();
+    }
 
     /**
-     * Draw the current state of {@link #bars} and {@link #peaks}.
-     * The Graphics2D is already configured and is disposed by the caller.
+     * Draw the current state of {@link #bars} and {@link #peaks}. The
+     * Graphics2D is already configured and is disposed by the caller.
      */
     protected abstract void drawFrame(Graphics2D g2, int width, int height);
 }

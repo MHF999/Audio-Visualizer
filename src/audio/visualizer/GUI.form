@@ -104,7 +104,7 @@
                   </Group>
                   <Group type="102" alignment="1" attributes="0">
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                      <Component id="exportFileButton" min="-2" max="-2" attributes="0"/>
+                      <Component id="deleteFileButton" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="-2" pref="24" max="-2" attributes="0"/>
                       <Component id="importFileButton" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="-2" pref="26" max="-2" attributes="0"/>
@@ -129,7 +129,7 @@
                       <Component id="scrollReference" pref="246" max="32767" attributes="0"/>
                       <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="exportFileButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="deleteFileButton" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="importFileButton" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace min="-2" pref="13" max="-2" attributes="0"/>
@@ -211,12 +211,12 @@
                 </Component>
               </SubComponents>
             </Container>
-            <Component class="javax.swing.JButton" name="exportFileButton">
+            <Component class="javax.swing.JButton" name="deleteFileButton">
               <Properties>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                   <Font name="SansSerif" size="12" style="3"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="&lt;html&gt;Export&lt;br&gt;(.mp4)&lt;/html&gt;"/>
+                <Property name="text" type="java.lang.String" value="&lt;html&gt;&lt;center&gt;Delete&lt;br&gt;File&lt;/center&gt;&lt;/html&gt;"/>
                 <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
                   <Border info="org.netbeans.modules.form.compat2.border.BevelBorderInfo">
                     <BevelBorder/>
@@ -231,6 +231,9 @@
                   <Dimension value="[55, 45]"/>
                 </Property>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="deleteFileButtonActionPerformed"/>
+              </Events>
               <AuxValues>
                 <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new JButton()"/>
               </AuxValues>
@@ -250,7 +253,7 @@
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                   <Font name="SansSerif" size="12" style="3"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="&lt;html&gt;Import&lt;br&gt; (.wav)&lt;/html&gt;"/>
+                <Property name="text" type="java.lang.String" value="&lt;html&gt;&lt;center&gt;Import&lt;br&gt; (.wav)&lt;/center&gt;&lt;/html&gt;"/>
                 <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
                   <Border info="org.netbeans.modules.form.compat2.border.BevelBorderInfo">
                     <BevelBorder/>
@@ -362,7 +365,7 @@
                     </Property>
                   </Properties>
                   <AuxValues>
-                    <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="visualStyleList.setSelectedIndex(3); // GUI starts with Horizontal Visualizer prepared"/>
+                    <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="visualStyleList.setSelectedIndex(3); // GUI starts with Vertical Visualizer prepared"/>
                     <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
                   </AuxValues>
                 </Component>

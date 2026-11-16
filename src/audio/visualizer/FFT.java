@@ -82,7 +82,7 @@ public class FFT implements Visualizer.FrequencyDataSource
     public void runFFT() {
 
         if (samples == null) {
-            throw new IllegalStateException(
+           throw new IllegalStateException(
                     "Call loadData() before runFFT().");
         }
 
@@ -177,6 +177,8 @@ public class FFT implements Visualizer.FrequencyDataSource
             // Exclude DC (0 Hz) from the displayed bars:
             startBin = Math.max(1, startBin);
             endBin = Math.min(magnitudes.length, endBin);
+            
+            endBin = Math.max(endBin, startBin + 1); // new line to fix dead bars
 
             double strongestMagnitude = 0.0;
 
@@ -184,8 +186,26 @@ public class FFT implements Visualizer.FrequencyDataSource
                 strongestMagnitude = Math.max(
                         strongestMagnitude, magnitudes[bin]);
             }
+            
+            //method 1:
+            /*double gain = 1.0;
+            double adjustedMagnitude = Math.sqrt(strongestMagnitude * gain);
+
+            bands[band] = Math.max(0.0, Math.min(1.0, adjustedMagnitude));*/
+            
+            
+            // method 2: (best?)
             double gain = 5.0;
-            bands[band] = Math.max(0.0, Math.min(1.0, strongestMagnitude * gain)); // new w/ gain multiplication
+            double magnitude = strongestMagnitude * gain;
+
+            // Logarithmic scaling makes quieter frequencies more visible.
+            double scaledMagnitude = Math.log1p(magnitude * 20.0) / Math.log1p(20.0);
+
+            bands[band] = Math.max(0.0, Math.min(1.0, scaledMagnitude));
+            
+           /* //method 3:
+            double gain = 5.0;
+            bands[band] = Math.max(0.0, Math.min(1.0, strongestMagnitude * gain)); // new w/ gain multiplication*/
             //bands[band] = Math.max(0.0, Math.min(1.0, strongestMagnitude));
         }
 

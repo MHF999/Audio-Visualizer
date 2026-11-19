@@ -11,8 +11,8 @@ import java.io.IOException;
  *
  * @author Team 7
  */
-public class Library implements Observer {
-
+public class Library
+{    
     private Path libraryPath;
     private ArrayList<AudioFile> audioFiles;
     private AudioFile selectedAudioFile;
@@ -128,20 +128,4 @@ public class Library implements Observer {
     public ArrayList<AudioFile> getAudioFiles() {
         return audioFiles;
     }
-
-    // These will probably have return types later on.
-    public void getWav() {
-    } // return file itself
-
-    public void getFFT() {
-    } // return FFT
-
-    private void exportMP4() {
-    }
-
-    // Necessary implementation for the Observer interface.
-    public void update() {
-    }
-    // TODO: Need duplicate() and delete() methods. Put in library class instead???
-
 }

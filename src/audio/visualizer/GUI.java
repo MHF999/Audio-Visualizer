@@ -6,6 +6,7 @@ import java.io.*;
 import java.awt.*;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
+import java.text.ParseException; 
 
 /**
  *
@@ -18,7 +19,6 @@ public class GUI extends JFrame {
     private Player player; // Player Declaration for use in button controls
     private Library library = new Library();
     private DefaultListModel<File> customModel = new DefaultListModel<>(); // JList 
-    // DELETE  private File selectedFile;
     private Visualizer visual;
     private Color barColor; // colour picked in the Type tab; null = default green-to-red
     private int bandCount = 32; // number of bars/bands in the visualizer
@@ -70,6 +70,7 @@ public class GUI extends JFrame {
                 updateTimeDisplay(); // newly added function to sync seek when paused.
             }
         });
+
         /*=== Seek-On-Click Handler ===*/
         seekBar.addMouseListener(
                 new java.awt.event.MouseAdapter() {
@@ -79,17 +80,16 @@ public class GUI extends JFrame {
                 if (player == null) {
                     return;
                 }
-                /* Uses a fraction to simulate physical distance on the slider 
-                ** component, this allows us the a mouse click to update the 
-                ** seekbar and the player accordingly. */
+                // Map the click's x-position to a slider value so the seek bar jumps to where the user clicked.
                 double fraction = e.getX() / (double) seekBar.getWidth();
                 int value = Math.min(seekBar.getMaximum(), Math.max(0, (int) (fraction * seekBar.getMaximum())));
                 player.seekTo(value);
-                updateTimeDisplay(); // newly added function to sync seek when paused. 
+                updateTimeDisplay(); // Refreshes the time labels allowing the updates to occur even while paused. 
             }
         });
 
         /*=== Visual Style Selection Handler ===*/
+        // Switches to the clicked visual style & starts playback.
         visualStyleList.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
@@ -116,18 +116,31 @@ public class GUI extends JFrame {
             // The chooser wraps the preview in a box titled "Preview"; clear that title.
             ((JComponent) jColorChooser1.getPreviewPanel().getParent()).setBorder(BorderFactory.createEmptyBorder());
         }
-        /*=== Bar Count Adjuster Handler ===*/
+        /*=== Bar Count Adjuster Setup ===*/
         // Even steps keep Mirrored and Radial symmetrical (they split bars into two halves).
         barAdjuster.setModel(new SpinnerNumberModel(32, 4, 100, 1));
-        ((JSpinner.DefaultEditor) barAdjuster.getEditor()).getTextField().setFocusLostBehavior(JFormattedTextField.REVERT);
-        
+        // Out-of-range typed values used to leave the spinner arrows stuck.
+        // Now invalid text is still accepted, but the next arrow click resets the field 
+        // to the last valid bandCount.
+        barAdjuster.setEditor(new JSpinner.NumberEditor(barAdjuster) {
+            @Override
+            public void commitEdit() throws ParseException {
+                try {
+                    super.commitEdit();
+                } catch (ParseException ex) {
+                    // Invalid text: restore last valid bar count, then abort the step
+                    getTextField().setValue(barAdjuster.getValue());
+                    throw ex;
+                }
+            }
+        });
+        // Updates the visualizer when barAdjuster is clicked by rebuilding it and resuming if it was running.
         barAdjuster.addChangeListener(e -> {
             bandCount = (Integer) barAdjuster.getValue();
-            
             if (fftData != null) {
                 fftData.updateBands(bandCount);
             }
-            
+
             if (visual != null) {
                 boolean wasRunning = visual.isRunning();
                 showVisualizer(visualStyleList.getSelectedIndex());
@@ -136,7 +149,9 @@ public class GUI extends JFrame {
                 }
             }
         });
-        // Handles populating Custom Library between start ups as a form of persistence.
+
+        /*=== Custom Library Setup ===*/
+        // Populates the Custom Library list from saved library entries at startup.
         refreshLibraryList();
     }
 
@@ -534,7 +549,7 @@ public class GUI extends JFrame {
 
 
     /* === Visualizer Color === */
-    // @author Creation
+    // @author Carson
     // Uses a colour picked in the Type tab. It is remembered, so it carries over
     // when the visualizer style is changed.
     private void applyBarColor(Color color) {
@@ -569,9 +584,9 @@ public class GUI extends JFrame {
             case 0 ->
                 new HorizontalBarVisualizer(source, bandCount);
             case 1 ->
-                new MirroredBarVisualizer(source, 2*bandCount);
+                new MirroredBarVisualizer(source, 2 * bandCount);
             case 2 ->
-                new RadialBarVisualizer(source, 2*bandCount);
+                new RadialBarVisualizer(source, 2 * bandCount);
             default ->
                 new StandardBarVisualizer(source, bandCount);
         };
@@ -674,7 +689,7 @@ public class GUI extends JFrame {
                 seekBar.setValue(0);
                 labelCurrentDuration.setText("--:--");
                 labelMaxDuration.setText("--:--");
-                
+
             } catch (UnsupportedAudioFileException | LineUnavailableException | IOException ex) {
                 logger.log(Level.SEVERE, null, ex);
             }

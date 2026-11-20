@@ -121,6 +121,8 @@ public class GUI extends JFrame {
         /*=== Bar Count Adjuster Handler ===*/
         // Even steps keep Mirrored and Radial symmetrical (they split bars into two halves).
         barAdjuster.setModel(new SpinnerNumberModel(32, 4, 100, 1));
+        ((JSpinner.DefaultEditor) barAdjuster.getEditor()).getTextField().setFocusLostBehavior(JFormattedTextField.REVERT);
+        
         barAdjuster.addChangeListener(e -> {
             bandCount = (Integer) barAdjuster.getValue();
             
@@ -156,10 +158,11 @@ public class GUI extends JFrame {
         playlistCustom = new javax.swing.JList<>();
         scrollReference = new javax.swing.JScrollPane();
         playlistDefault = new javax.swing.JList<>();
-        deleteFileButton = new JButton();
         labelCustom = new javax.swing.JLabel();
-        importFileButton = new javax.swing.JButton();
         labelReference = new javax.swing.JLabel();
+        importFileButton = new javax.swing.JButton();
+        deleteFileButton = new JButton();
+        customLibrarySeperator = new javax.swing.JSeparator();
         panelTab_Type = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         visualStyleList = new javax.swing.JList<>();
@@ -205,19 +208,14 @@ public class GUI extends JFrame {
         scrollReference.setViewportView(playlistDefault);
         playlistDefault.getAccessibleContext().setAccessibleDescription("");
 
-        deleteFileButton.setFont(new java.awt.Font("SansSerif", 3, 12)); // NOI18N
-        deleteFileButton.setText("<html><center>Delete<br>File</center></html>");
-        deleteFileButton.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
-        deleteFileButton.setBorderPainted(false);
-        deleteFileButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        deleteFileButton.setMinimumSize(new java.awt.Dimension(45, 38));
-        deleteFileButton.setPreferredSize(new java.awt.Dimension(55, 45));
-        deleteFileButton.addActionListener(this::deleteFileButtonActionPerformed);
-
         labelCustom.setFont(new java.awt.Font("SansSerif", 3, 18)); // NOI18N
         labelCustom.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         labelCustom.setText("Custom Library");
         labelCustom.setDoubleBuffered(true);
+
+        labelReference.setFont(new java.awt.Font("SansSerif", 3, 18)); // NOI18N
+        labelReference.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        labelReference.setText("Default Library");
 
         importFileButton.setFont(new java.awt.Font("SansSerif", 3, 12)); // NOI18N
         importFileButton.setText("<html><center>Import<br> (.wav)</center></html>");
@@ -228,50 +226,56 @@ public class GUI extends JFrame {
         importFileButton.setPreferredSize(new java.awt.Dimension(55, 45));
         importFileButton.addActionListener(this::importFileButtonActionPerformed);
 
-        labelReference.setFont(new java.awt.Font("SansSerif", 3, 18)); // NOI18N
-        labelReference.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        labelReference.setText("Default Library");
+        deleteFileButton.setFont(new java.awt.Font("SansSerif", 3, 12)); // NOI18N
+        deleteFileButton.setText("<html><center>Delete<br>File</center></html>");
+        deleteFileButton.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        deleteFileButton.setBorderPainted(false);
+        deleteFileButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        deleteFileButton.setMinimumSize(new java.awt.Dimension(45, 38));
+        deleteFileButton.setPreferredSize(new java.awt.Dimension(55, 45));
+        deleteFileButton.addActionListener(this::deleteFileButtonActionPerformed);
+
+        customLibrarySeperator.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(204, 204, 204), 1, true));
 
         javax.swing.GroupLayout panelTab_FilesLayout = new javax.swing.GroupLayout(panelTab_Files);
         panelTab_Files.setLayout(panelTab_FilesLayout);
         panelTab_FilesLayout.setHorizontalGroup(
             panelTab_FilesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(scrollReference)
+            .addComponent(customLibrarySeperator, javax.swing.GroupLayout.Alignment.TRAILING)
             .addGroup(panelTab_FilesLayout.createSequentialGroup()
                 .addGroup(panelTab_FilesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(panelTab_FilesLayout.createSequentialGroup()
+                        .addGap(26, 26, 26)
+                        .addComponent(importFileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(21, 21, 21)
+                        .addComponent(deleteFileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(panelTab_FilesLayout.createSequentialGroup()
+                        .addGap(6, 6, 6)
+                        .addComponent(labelReference))
+                    .addGroup(panelTab_FilesLayout.createSequentialGroup()
                         .addContainerGap()
-                        .addComponent(labelCustom)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(scrollCustom, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addComponent(scrollReference, javax.swing.GroupLayout.Alignment.TRAILING))
-                .addContainerGap())
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelTab_FilesLayout.createSequentialGroup()
-                .addGap(0, 0, Short.MAX_VALUE)
-                .addComponent(deleteFileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(24, 24, 24)
-                .addComponent(importFileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(26, 26, 26))
-            .addGroup(panelTab_FilesLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(labelReference)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(labelCustom)))
+                .addContainerGap(26, Short.MAX_VALUE))
+            .addComponent(scrollCustom, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
         );
         panelTab_FilesLayout.setVerticalGroup(
             panelTab_FilesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panelTab_FilesLayout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelTab_FilesLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(labelCustom)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(scrollCustom, javax.swing.GroupLayout.DEFAULT_SIZE, 153, Short.MAX_VALUE)
+                .addComponent(scrollCustom)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(panelTab_FilesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(importFileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(deleteFileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(customLibrarySeperator, javax.swing.GroupLayout.PREFERRED_SIZE, 3, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(labelReference, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(scrollReference, javax.swing.GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(panelTab_FilesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(deleteFileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(importFileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(13, 13, 13))
+                .addComponent(scrollReference, javax.swing.GroupLayout.PREFERRED_SIZE, 254, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         TabbedPane.addTab("Files", panelTab_Files);
@@ -333,7 +337,7 @@ public class GUI extends JFrame {
                 .addComponent(labelBarAdjuster)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(barAdjuster, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(64, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         TabbedPane.addTab("Type", panelTab_Type);
@@ -366,7 +370,7 @@ public class GUI extends JFrame {
         seekBar.setPaintTicks(true);
 
         skipBackButton.setFont(new java.awt.Font("Dialog", 1, 36)); // NOI18N
-        skipBackButton.setText("⏮");
+        skipBackButton.setText("⏪");
         skipBackButton.setActionCommand("null");
         skipBackButton.setAlignmentX(1.0F);
         skipBackButton.setAlignmentY(1.0F);
@@ -380,7 +384,7 @@ public class GUI extends JFrame {
         skipBackButton.addActionListener(this::skipBackButtonActionPerformed);
 
         skipForwardButton.setFont(new java.awt.Font("Dialog", 1, 36)); // NOI18N
-        skipForwardButton.setText("⏭");
+        skipForwardButton.setText("⏩");
         skipForwardButton.setActionCommand("null");
         skipForwardButton.setAlignmentX(1.0F);
         skipForwardButton.setAlignmentY(1.0F);
@@ -520,7 +524,7 @@ public class GUI extends JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(TabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(TabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 580, Short.MAX_VALUE)
                     .addComponent(blueBackgroundPane))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(panelMedia_Controls, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -801,6 +805,7 @@ public class GUI extends JFrame {
     private javax.swing.JTabbedPane TabbedPane;
     private final javax.swing.JSpinner barAdjuster = new javax.swing.JSpinner();
     private javax.swing.JDesktopPane blueBackgroundPane;
+    private javax.swing.JSeparator customLibrarySeperator;
     private javax.swing.JButton deleteFileButton;
     private javax.swing.JButton importFileButton;
     private javax.swing.JColorChooser jColorChooser1;

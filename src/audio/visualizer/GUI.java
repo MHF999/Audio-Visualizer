@@ -21,7 +21,7 @@ public class GUI extends JFrame {
     // DELETE  private File selectedFile;
     private Visualizer visual;
     private Color barColor; // colour picked in the Type tab; null = default green-to-red
-    private int barCount = 32; // number of bars/bands in the visualizer
+    private int bandCount = 32; // number of bars/bands in the visualizer
     private FFT fftData;
 
     /* === GUI Constructor Start === */
@@ -118,9 +118,14 @@ public class GUI extends JFrame {
         }
         /*=== Bar Count Adjuster Handler ===*/
         // Even steps keep Mirrored and Radial symmetrical (they split bars into two halves).
-        barAdjuster.setModel(new SpinnerNumberModel(32, 4, 100, 2));
+        barAdjuster.setModel(new SpinnerNumberModel(32, 4, 100, 1));
         barAdjuster.addChangeListener(e -> {
-            barCount = (Integer) barAdjuster.getValue();
+            bandCount = (Integer) barAdjuster.getValue();
+            
+            if (fftData != null) {
+                fftData.updateBands(bandCount);
+            }
+            
             if (visual != null) {
                 boolean wasRunning = visual.isRunning();
                 showVisualizer(visualStyleList.getSelectedIndex());
@@ -555,16 +560,16 @@ public class GUI extends JFrame {
     private Visualizer createVisualizer(int index) {
         // The line below resolved an issue where fftData being null before a
         // file loaded, causing a null ptr exception on timer tick. Source prevents this issue
-        Visualizer.FrequencyDataSource source = fftData != null ? fftData : new Visualizer.RandomFrequencyData(barCount);
+        Visualizer.FrequencyDataSource source = fftData != null ? fftData : new Visualizer.RandomFrequencyData(bandCount);
         Visualizer created = switch (index) {
             case 0 ->
-                new HorizontalBarVisualizer(source, barCount);
+                new HorizontalBarVisualizer(source, bandCount);
             case 1 ->
-                new MirroredBarVisualizer(source, barCount);
+                new MirroredBarVisualizer(source, 2*bandCount);
             case 2 ->
-                new RadialBarVisualizer(source, barCount);
+                new RadialBarVisualizer(source, 2*bandCount);
             default ->
-                new StandardBarVisualizer(source, barCount);
+                new StandardBarVisualizer(source, bandCount);
         };
         created.setBarColor(barColor);
         return created;
@@ -587,7 +592,7 @@ public class GUI extends JFrame {
         AudioFile audioFile = new AudioFile(selectedFile.toPath());
         try {
             player = new Player(audioFile);
-            fftData = new FFT(player);
+            fftData = new FFT(player, bandCount);
             seekBar.setMinimum(0);
             int totalMillis = (int) (player.getTotalTime() * 1000.0);
             seekBar.setMaximum(totalMillis);

@@ -25,29 +25,31 @@ public class FFT implements Visualizer.FrequencyDataSource
                                        // provided by Apache Commons Numbers.
 
     private final int chunkSize = 2048;
-    private final int bandCount = 32;
+    private int bandCount = 32;
     
     // Constructor to initialize player for the FFT object:
-    public FFT(Player player) throws UnsupportedAudioFileException, IOException {
-    if (player == null) {
-        throw new IllegalArgumentException("Null Player.");
+    public FFT(Player player, int actualBandCount) throws UnsupportedAudioFileException, IOException {
+        bandCount = actualBandCount;
+        
+        if (player == null) {
+            throw new IllegalArgumentException("Null Player.");
+        }
+
+        this.player = player;
+
+        AudioFile audioFile = player.getAudioFile();
+
+        if (audioFile == null) {
+            throw new IllegalArgumentException("Player has no AudioFile.");
+        }
+
+        this.allSamples = audioFile.getMonoDataCopy();
+        this.sampleRate = audioFile.getSampleRate();
+
+        if (allSamples.length == 0) {
+            throw new IllegalArgumentException("Audio file contains no samples.");
+        }
     }
-
-    this.player = player;
-
-    AudioFile audioFile = player.getAudioFile();
-
-    if (audioFile == null) {
-        throw new IllegalArgumentException("Player has no AudioFile.");
-    }
-
-    this.allSamples = audioFile.getMonoDataCopy();
-    this.sampleRate = audioFile.getSampleRate();
-
-    if (allSamples.length == 0) {
-        throw new IllegalArgumentException("Audio file contains no samples.");
-    }
-}
         
     // Request small pieces of the audio file at a time for runFFT to transform.
     public void loadData() {
@@ -73,10 +75,6 @@ public class FFT implements Visualizer.FrequencyDataSource
 
     transformedData = null;
 }
-    
-    public void saveData() {
-        
-    }
     
     // Run the FFT:
     public void runFFT() {
@@ -212,6 +210,11 @@ public class FFT implements Visualizer.FrequencyDataSource
         return bands;
     }
     
+   public void updateBands(int newBandCount)
+   {
+       bandCount = newBandCount;
+   }
+   
     @Override
     public double[] nextFrame() {
         loadData();

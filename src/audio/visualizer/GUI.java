@@ -1,5 +1,7 @@
 package audio.visualizer;
 
+import audio.visualizer.model.*;
+import audio.visualizer.graphics.*;
 import java.util.logging.*;
 import javax.swing.*;
 import java.io.*;
@@ -613,8 +615,35 @@ public class GUI extends JFrame {
         int millis = (int) (player.getCurrentFrame() * 1000L / player.getAudioFile().getSampleRate());
         seekBar.setValue(millis);
         labelCurrentDuration.setText(String.format("%02d:%02d", millis / 60000, (millis / 1000) % 60));
+        
+        if ((player.getTotalTime() - player.getCurrentTime()) < 0.01) {
+            stopPlayer();
+        }
     }
 // === Media Control Handlers ===
+    private void stopPlayer() {
+        if (player != null) {
+            try {
+                player.stop();
+                // Resets visual so a new one can load next time play is ckcked.
+                if (visual != null) {
+                    visual.stop();
+                }
+                player = null;
+                fftData = null;
+                showVisualizer(visualStyleList.getSelectedIndex());
+
+                progressTimer.stop();
+                seekBar.setValue(0);
+                labelCurrentDuration.setText("--:--");
+                labelMaxDuration.setText("--:--");
+                
+            } catch (UnsupportedAudioFileException | LineUnavailableException | IOException ex) {
+                logger.log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+    
     private void playButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playButtonActionPerformed
         AudioFile current = library.getSelected();
         if (player == null && current != null) {
@@ -655,26 +684,7 @@ public class GUI extends JFrame {
     }//GEN-LAST:event_pauseButtonActionPerformed
 
     private void stopButtonActionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButtonActionActionPerformed
-        if (player != null) {
-            try {
-                player.stop();
-                // Resets visual so a new one can load next time play is ckcked.
-                if (visual != null) {
-                    visual.stop();
-                }
-                player = null;
-                fftData = null;
-                showVisualizer(visualStyleList.getSelectedIndex());
-
-                progressTimer.stop();
-                seekBar.setValue(0);
-                labelCurrentDuration.setText("--:--");
-                labelMaxDuration.setText("--:--");
-                
-            } catch (UnsupportedAudioFileException | LineUnavailableException | IOException ex) {
-                logger.log(Level.SEVERE, null, ex);
-            }
-        }
+        stopPlayer();
     }//GEN-LAST:event_stopButtonActionActionPerformed
 
     private void skipBackButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipBackButtonActionPerformed

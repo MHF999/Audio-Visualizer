@@ -1,5 +1,7 @@
 package audio.visualizer;
 
+import audio.visualizer.model.*;
+import audio.visualizer.graphics.*;
 import java.util.logging.*;
 import javax.swing.*;
 import java.io.*;

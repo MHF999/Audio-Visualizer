@@ -662,7 +662,11 @@ public class GUI extends JFrame {
                 player = null;
                 fftData = null;
                 showVisualizer(visualStyleList.getSelectedIndex());
-
+                
+                blueBackgroundPane.remove(visual);
+                blueBackgroundPane.revalidate();
+                blueBackgroundPane.repaint();
+                
                 progressTimer.stop();
                 seekBar.setValue(0);
                 labelCurrentDuration.setText("--:--");

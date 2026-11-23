@@ -1,5 +1,6 @@
-package audio.visualizer;
+package audio.visualizer.model;
 
+import audio.visualizer.model.AudioFile;
 import java.io.*;
 import javax.sound.sampled.*;
 
@@ -15,7 +16,7 @@ public class Player {
     private String playerState;
     private long microPosition;
 
-    Player(AudioFile audioFile) throws UnsupportedAudioFileException, LineUnavailableException, IOException {
+    public Player(AudioFile audioFile) throws UnsupportedAudioFileException, LineUnavailableException, IOException {
         this.audioFile = audioFile;
         playerState = "paused";
         microPosition = 0L;

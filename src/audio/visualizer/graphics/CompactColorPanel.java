@@ -1,4 +1,4 @@
-package audio.visualizer;
+package audio.visualizer.graphics;
 
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;

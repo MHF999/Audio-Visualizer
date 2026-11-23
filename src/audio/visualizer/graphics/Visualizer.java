@@ -1,4 +1,4 @@
-package audio.visualizer;
+package audio.visualizer.graphics;
 
 import java.awt.Color;
 import java.awt.Dimension;

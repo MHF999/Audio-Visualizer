@@ -1,5 +1,6 @@
-package audio.visualizer;
+package audio.visualizer.graphics;
 
+import audio.visualizer.graphics.StandardBarVisualizer;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;

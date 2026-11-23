@@ -1,4 +1,6 @@
 package audio.visualizer;
+import audio.visualizer.model.*;
+import audio.visualizer.graphics.*;
 
 import java.util.Scanner;
 import java.util.ArrayList;

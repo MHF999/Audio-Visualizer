@@ -1,5 +1,6 @@
-package audio.visualizer;
+package audio.visualizer.graphics;
 
+import audio.visualizer.graphics.Visualizer;
 import java.awt.BasicStroke;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;

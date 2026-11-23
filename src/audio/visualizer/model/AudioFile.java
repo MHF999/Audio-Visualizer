@@ -1,4 +1,4 @@
-package audio.visualizer;
+package audio.visualizer.model;
 
 import java.nio.file.Paths;
 import java.nio.file.Path;

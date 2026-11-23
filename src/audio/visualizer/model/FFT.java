@@ -1,5 +1,7 @@
-package audio.visualizer;
+package audio.visualizer.model;
 
+import audio.visualizer.graphics.Visualizer;
+import audio.visualizer.model.AudioFile;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;

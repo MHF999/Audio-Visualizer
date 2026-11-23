@@ -1,5 +1,7 @@
-package audio.visualizer;
+package audio.visualizer.model;
 
+import audio.visualizer.Main;
+import audio.visualizer.model.AudioFile;
 import java.util.ArrayList;
 import java.nio.file.Paths;
 import java.nio.file.Path;

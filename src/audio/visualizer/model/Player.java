@@ -108,6 +108,10 @@ public class Player {
 
         return currentPosition;
     }
+    
+    public String getPlayerState() {
+        return playerState;
+    }
 
     //Added by sdnapoles: seek-on-click supportr for GUI seek bar.
     public void seekTo(long millis) {

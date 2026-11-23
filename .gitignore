@@ -33,3 +33,4 @@ manifest.mf
 # Library and Config Files
 !/Library/
 !/Configs/
+/dist/

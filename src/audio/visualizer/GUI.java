@@ -99,10 +99,21 @@ public class GUI extends JFrame {
                 if (index < 0) {
                     return;
                 }
+                
+                if (player != null) {
+                    String state = player.getPlayerState();
+                    
+                    if (state.equals("playing")) {
+                        showVisualizer(index);
+                        playButtonActionPerformed(null);
+                        return;
+                    }
+                }
+                
                 showVisualizer(index);
-                playButtonActionPerformed(null);
             }
         });
+        
         /*=== Compact Color Picker ===*/
         // @author Carson
         // The standard chooser tabs (swatches, HSV, RGB...) are much wider than this side
@@ -119,7 +130,7 @@ public class GUI extends JFrame {
             ((JComponent) jColorChooser1.getPreviewPanel().getParent()).setBorder(BorderFactory.createEmptyBorder());
         }
         /*=== Bar Count Adjuster Setup ===*/
-        // Even steps keep Mirrored and Radial symmetrical (they split bars into two halves).
+        // Single steps are doubled for Mirrored and Radial (they split bars into two halves).
         barAdjuster.setModel(new SpinnerNumberModel(32, 4, 100, 1));
         // Out-of-range typed values used to leave the spinner arrows stuck.
         // Now invalid text is still accepted, but the next arrow click resets the field 
@@ -298,7 +309,7 @@ public class GUI extends JFrame {
         visualStyleList.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.LOWERED));
         visualStyleList.setFont(new java.awt.Font("SansSerif", 0, 15)); // NOI18N
         visualStyleList.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "Horizontal Bars", "Mirrored Bars", "Radial Bars", "Vertical Bars" };
+            String[] strings = { "Standard", "Vertical", "Mirrored", "Radial" };
             public int getSize() { return strings.length; }
             public String getElementAt(int i) { return strings[i]; }
         });
@@ -584,13 +595,13 @@ public class GUI extends JFrame {
         Visualizer.FrequencyDataSource source = fftData != null ? fftData : new Visualizer.RandomFrequencyData(bandCount);
         Visualizer created = switch (index) {
             case 0 ->
-                new HorizontalBarVisualizer(source, bandCount);
-            case 1 ->
-                new MirroredBarVisualizer(source, 2 * bandCount);
-            case 2 ->
-                new RadialBarVisualizer(source, 2 * bandCount);
-            default ->
                 new StandardBarVisualizer(source, bandCount);
+            case 1 ->
+                new HorizontalBarVisualizer(source, /* 2 * */ bandCount); // These "fixed" the band number issue, but broke the proper frequency range.
+            case 2 ->
+                new MirroredBarVisualizer(source, /*2 * */ bandCount); // These "fixed" the band number issue, but broke the proper frequency range.
+            default ->
+                new RadialBarVisualizer(source, bandCount);
         };
         created.setBarColor(barColor);
         return created;

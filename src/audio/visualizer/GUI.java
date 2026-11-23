@@ -23,7 +23,7 @@ public class GUI extends JFrame {
     private DefaultListModel<File> customModel = new DefaultListModel<>(); // JList 
     private Visualizer visual;
     private Color barColor; // colour picked in the Type tab; null = default green-to-red
-    private int bandCount = 32; // number of bars/bands in the visualizer
+    private int bandCount = 30; // number of bars/bands in the visualizer
     private FFT fftData;
 
     /* === GUI Constructor Start === */
@@ -131,7 +131,7 @@ public class GUI extends JFrame {
         }
         /*=== Bar Count Adjuster Setup ===*/
         // Single steps are doubled for Mirrored and Radial (they split bars into two halves).
-        barAdjuster.setModel(new SpinnerNumberModel(32, 4, 100, 1));
+        barAdjuster.setModel(new SpinnerNumberModel(30, 4, 100, 1));
         // Out-of-range typed values used to leave the spinner arrows stuck.
         // Now invalid text is still accepted, but the next arrow click resets the field 
         // to the last valid bandCount.
@@ -196,7 +196,6 @@ public class GUI extends JFrame {
         labelVisualizerStyle = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
         labelBarAdjuster = new javax.swing.JLabel();
-        panelTab_Configs = new javax.swing.JPanel();
         panelMedia_Controls = new javax.swing.JPanel();
         labelCurrentDuration = new javax.swing.JLabel();
         labelMaxDuration = new javax.swing.JLabel();
@@ -304,7 +303,7 @@ public class GUI extends JFrame {
                 .addComponent(scrollReference, javax.swing.GroupLayout.PREFERRED_SIZE, 254, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
-        TabbedPane.addTab("Files", panelTab_Files);
+        TabbedPane.addTab("Library", panelTab_Files);
 
         visualStyleList.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.LOWERED));
         visualStyleList.setFont(new java.awt.Font("SansSerif", 0, 15)); // NOI18N
@@ -313,7 +312,7 @@ public class GUI extends JFrame {
             public int getSize() { return strings.length; }
             public String getElementAt(int i) { return strings[i]; }
         });
-        visualStyleList.setSelectedIndex(3); // GUI starts with Vertical Visualizer prepared
+        visualStyleList.setSelectedIndex(0); // GUI starts with Vertical Visualizer prepared
         jScrollPane1.setViewportView(visualStyleList);
 
         labelVisualizerStyle.setFont(new java.awt.Font("SansSerif", 3, 18)); // NOI18N
@@ -326,7 +325,7 @@ public class GUI extends JFrame {
         barAdjuster.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.LOWERED));
 
         labelBarAdjuster.setFont(new java.awt.Font("SansSerif", 3, 18)); // NOI18N
-        labelBarAdjuster.setText("Bar Adjuster");
+        labelBarAdjuster.setText("Visualizer Bands");
 
         javax.swing.GroupLayout panelTab_TypeLayout = new javax.swing.GroupLayout(panelTab_Type);
         panelTab_Type.setLayout(panelTab_TypeLayout);
@@ -366,20 +365,7 @@ public class GUI extends JFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        TabbedPane.addTab("Type", panelTab_Type);
-
-        javax.swing.GroupLayout panelTab_ConfigsLayout = new javax.swing.GroupLayout(panelTab_Configs);
-        panelTab_Configs.setLayout(panelTab_ConfigsLayout);
-        panelTab_ConfigsLayout.setHorizontalGroup(
-            panelTab_ConfigsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
-        panelTab_ConfigsLayout.setVerticalGroup(
-            panelTab_ConfigsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
-
-        TabbedPane.addTab("Configs", panelTab_Configs);
+        TabbedPane.addTab("Visualizer", panelTab_Type);
 
         panelMedia_Controls.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
 
@@ -594,14 +580,14 @@ public class GUI extends JFrame {
         // file loaded, causing a null ptr exception on timer tick. Source prevents this issue
         Visualizer.FrequencyDataSource source = fftData != null ? fftData : new Visualizer.RandomFrequencyData(bandCount);
         Visualizer created = switch (index) {
-            case 0 ->
-                new StandardBarVisualizer(source, bandCount);
             case 1 ->
-                new HorizontalBarVisualizer(source, /* 2 * */ bandCount); // These "fixed" the band number issue, but broke the proper frequency range.
+                new HorizontalBarVisualizer(source, bandCount);
             case 2 ->
-                new MirroredBarVisualizer(source, /*2 * */ bandCount); // These "fixed" the band number issue, but broke the proper frequency range.
+                new MirroredBarVisualizer(source, /* 2 * */ bandCount); // These "fixed" the band number issue, but broke the proper frequency range.
+            case 3 ->
+                new RadialBarVisualizer(source, /*2 * */ bandCount); // These "fixed" the band number issue, but broke the proper frequency range.
             default ->
-                new RadialBarVisualizer(source, bandCount);
+                new StandardBarVisualizer(source, bandCount);
         };
         created.setBarColor(barColor);
         return created;
@@ -743,6 +729,29 @@ public class GUI extends JFrame {
         }
     }//GEN-LAST:event_skipForwardButtonActionPerformed
 
+    private void deleteFileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteFileButtonActionPerformed
+        File target = playlistCustom.getSelectedValue();
+        if (target == null || target.getName().startsWith("default_")) {
+            return;
+        }
+        int confirm = JOptionPane.showConfirmDialog(this,
+            "Permanently delete \"" + target.getName() + "\" from the Library folder?",
+            "Delete File",
+            JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+        stopButtonActionActionPerformed(null); // releases the file before deleting
+        for (AudioFile a : new java.util.ArrayList<>(library.getAudioFiles())) {
+            if (a.getName().equals(target.getName())) {
+                library.delete(a);
+                break;
+            }
+        }
+        customModel.removeElement(target);
+        playlistCustom.clearSelection();
+    }//GEN-LAST:event_deleteFileButtonActionPerformed
+
     private void importFileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importFileButtonActionPerformed
         JFileChooser chooser = new JFileChooser(System.getProperty("user.home"));
         chooser.setDialogTitle("Choose a .wav file");
@@ -757,7 +766,7 @@ public class GUI extends JFrame {
             if (!selected.exists()) {
                 return; // import failed
             }
-//             File selected = chooser.getSelectedFile();
+            //             File selected = chooser.getSelectedFile();
             if (!customModel.contains(selected)) {
                 customModel.addElement(selected);
             }
@@ -783,29 +792,6 @@ public class GUI extends JFrame {
             loadAudioFile(selected);
         }
     }//GEN-LAST:event_importFileButtonActionPerformed
-
-    private void deleteFileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteFileButtonActionPerformed
-        File target = playlistCustom.getSelectedValue();
-        if (target == null || target.getName().startsWith("default_")) {
-            return;
-        }
-        int confirm = JOptionPane.showConfirmDialog(this,
-                "Permanently delete \"" + target.getName() + "\" from the Library folder?",
-                "Delete File",
-                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-        if (confirm != JOptionPane.YES_OPTION) {
-            return;
-        }
-        stopButtonActionActionPerformed(null); // releases the file before deleting
-        for (AudioFile a : new java.util.ArrayList<>(library.getAudioFiles())) {
-            if (a.getName().equals(target.getName())) {
-                library.delete(a);
-                break;
-            }
-        }
-        customModel.removeElement(target);
-        playlistCustom.clearSelection();
-    }//GEN-LAST:event_deleteFileButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -848,7 +834,6 @@ public class GUI extends JFrame {
     private javax.swing.JLabel labelReference;
     private javax.swing.JLabel labelVisualizerStyle;
     private javax.swing.JPanel panelMedia_Controls;
-    private javax.swing.JPanel panelTab_Configs;
     private javax.swing.JPanel panelTab_Files;
     private javax.swing.JPanel panelTab_Type;
     private javax.swing.JButton pauseButton;

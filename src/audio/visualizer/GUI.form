@@ -81,8 +81,8 @@
           </Properties>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
-              <JTabbedPaneConstraints tabName="Files">
-                <Property name="tabTitle" type="java.lang.String" value="Files"/>
+              <JTabbedPaneConstraints tabName="Library">
+                <Property name="tabTitle" type="java.lang.String" value="Library"/>
               </JTabbedPaneConstraints>
             </Constraint>
           </Constraints>
@@ -296,8 +296,8 @@
         <Container class="javax.swing.JPanel" name="panelTab_Type">
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
-              <JTabbedPaneConstraints tabName="Type">
-                <Property name="tabTitle" type="java.lang.String" value="Type"/>
+              <JTabbedPaneConstraints tabName="Visualizer">
+                <Property name="tabTitle" type="java.lang.String" value="Visualizer"/>
               </JTabbedPaneConstraints>
             </Constraint>
           </Constraints>
@@ -375,7 +375,7 @@
                     </Property>
                   </Properties>
                   <AuxValues>
-                    <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="visualStyleList.setSelectedIndex(3); // GUI starts with Vertical Visualizer prepared"/>
+                    <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="visualStyleList.setSelectedIndex(0); // GUI starts with Vertical Visualizer prepared"/>
                     <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
                   </AuxValues>
                 </Component>
@@ -419,32 +419,10 @@
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                   <Font name="SansSerif" size="18" style="3"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="Bar Adjuster"/>
+                <Property name="text" type="java.lang.String" value="Visualizer Bands"/>
               </Properties>
             </Component>
           </SubComponents>
-        </Container>
-        <Container class="javax.swing.JPanel" name="panelTab_Configs">
-          <Constraints>
-            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
-              <JTabbedPaneConstraints tabName="Configs">
-                <Property name="tabTitle" type="java.lang.String" value="Configs"/>
-              </JTabbedPaneConstraints>
-            </Constraint>
-          </Constraints>
-
-          <Layout>
-            <DimensionLayout dim="0">
-              <Group type="103" groupAlignment="0" attributes="0">
-                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-              </Group>
-            </DimensionLayout>
-            <DimensionLayout dim="1">
-              <Group type="103" groupAlignment="0" attributes="0">
-                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-              </Group>
-            </DimensionLayout>
-          </Layout>
         </Container>
       </SubComponents>
     </Container>
